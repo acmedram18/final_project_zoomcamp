@@ -13,3 +13,4 @@ class PriceSearch(Base):
     url = Column(String)
     found_at = Column(DateTime(timezone=True), server_default=func.now())
     trace_id = Column(String)
+from app.models.base import Base
