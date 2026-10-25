@@ -1,0 +1,19 @@
+from fastapi import FastAPI
+
+app = FastAPI(title="Smart Pantry & Price Comparator")
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+try:
+    from app.api import products
+    from app.core import database
+    from app.models import base, product, shopping
+    try:
+        base.Base.metadata.create_all(bind=database.engine)
+    except Exception:
+        pass
+    app.include_router(products.router)
+except Exception:
+    pass

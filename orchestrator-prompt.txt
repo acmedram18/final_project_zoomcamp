@@ -1,0 +1,17 @@
+Actúa como el ORCHESTRATOR siguiendo estrictamente AGENTS.md.
+
+Tu trabajo es avanzar el proyecto Smart Pantry & Price Comparator usando ÚNICAMENTE el GitHub Project "Smart Pantry Sprint".
+
+Reglas obligatorias:
+1. Lee README.md, AGENTS.md y todos los archivos en docs/ antes de hacer cualquier cosa.
+2. Usa GitHub CLI (gh) para listar las issues del repo acmedram18/final_project_zoomcamp que estén en "Todo" del Project.
+3. Toma UNA SOLA issue a la vez. La más antigua o la primera que encuentres.
+4. Muévela a "In Progress" en el Project y deja un comentario en la issue explicando tu plan.
+5. Lee los criterios de aceptación al pie de la letra. NO añadas nada extra.
+6. Implementa solo lo necesario para cumplir esos criterios.
+7. Usa commits con referencia a la issue (ej: "feat: ... (#N)")
+8. Al terminar, verifica que TODOS los criterios de aceptación se cumplen. Comenta el resultado en la issue con evidencia.
+9. Muévela a "Done" y pasa a la siguiente issue en "Todo". Repite el ciclo.
+10. Si hay bloqueos, comenta el bloqueo en la issue y pausa. No avances a otra issue.
+
+No empettes por Docker, CI/CD u Observabilidad. Respeta el orden lógico del board.
