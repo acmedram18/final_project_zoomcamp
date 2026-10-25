@@ -29,3 +29,9 @@ try:
     app.include_router(prices.router)
 except Exception:
     pass
+
+try:
+    from app.models import price
+    base.Base.metadata.create_all(bind=database.engine)
+except Exception:
+    pass
