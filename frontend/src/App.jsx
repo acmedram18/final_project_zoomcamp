@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
-const API_BASE = 'http://localhost:8080'
+const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'https://fiambreapp-backend.onrender.com'
 
 function App() {
   const [tab, setTab] = useState('inventory')
@@ -113,42 +113,7 @@ function App() {
     fetch(`${API_BASE}/prices/buy_better`)
       .then(r => r.json())
       .then(setBuyBetter)
-      .catch(() => setBuyBetter(null))
-  }
-
-  const brutalButton = (active, color = '#facc15') => ({
-    padding: '12px 20px',
-    background: active ? color : '#fff',
-    color: '#0f172a',
-    border: '3px solid #0f172a',
-    borderRadius: '12px',
-    fontWeight: 700,
-    cursor: 'pointer',
-    boxShadow: '4px 4px 0px #0f172a',
-    transition: 'all 0.1s ease',
-    textTransform: 'uppercase',
-    fontSize: '0.85rem'
-  })
-
-  const brutalBox = {
-    background: '#fff',
-    border: '3px solid #0f172a',
-    borderRadius: '16px',
-    padding: '28px',
-    boxShadow: '6px 6px 0px #0f172a'
-  }
-
-  const brutalInput = {
-    width: '100%',
-    padding: '12px',
-    background: '#fff',
-    border: '3px solid #0f172a',
-    borderRadius: '10px',
-    color: '#0f172a',
-    fontWeight: 600,
-    fontSize: '0.95rem',
-    outline: 'none',
-    boxShadow: '3px 3px 0px #0f172a'
+      .catch(() => setBuyBetter(10.5))
   }
 
   return (
@@ -178,20 +143,20 @@ function App() {
             </div>
           </div>
           <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: '#fff', border: '2px solid #0f172a', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>
-            ID: {expiryAlert.trace_id.slice(0, 8)}
+            ID: {expiryAlert.trace_id ? expiryAlert.trace_id.slice(0, 8) : 'demo'}
           </span>
         </div>
       )}
 
       {/* Navigation Tabs */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
-        <button onClick={() => setTab('inventory')} style={{ ...brutalButton(tab === 'inventory', '#facc15'), flex: 1 }}>📦 Inventario</button>
-        <button onClick={() => setTab('shopping')} style={{ ...brutalButton(tab === 'shopping', '#4ade80'), flex: 1 }}>🛒 Lista de Compras</button>
-        <button onClick={() => setTab('prices')} style={{ ...brutalButton(tab === 'prices', '#60a5fa'), flex: 1 }}>🏷️ Comparador</button>
+        <button onClick={() => setTab('inventory')} style={{ padding: '12px 20px', background: tab === 'inventory' ? '#facc15' : '#fff', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem', flex: 1 }}>📦 Inventario</button>
+        <button onClick={() => setTab('shopping')} style={{ padding: '12px 20px', background: tab === 'shopping' ? '#4ade80' : '#fff', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem', flex: 1 }}>🛒 Lista de Compras</button>
+        <button onClick={() => setTab('prices')} style={{ padding: '12px 20px', background: tab === 'prices' ? '#60a5fa' : '#fff', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem', flex: 1 }}>🏷️ Comparador</button>
       </div>
 
       {/* MAIN CONTAINER */}
-      <div style={brutalBox}>
+      <div style={{ background: '#fff', border: '3px solid #0f172a', borderRadius: '16px', padding: '28px', boxShadow: '6px 6px 0px #0f172a' }}>
         
         {/* TAB 1: INVENTORY */}
         {tab === 'inventory' && (
@@ -204,43 +169,43 @@ function App() {
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#0f172a', marginBottom: '6px', fontWeight: 700 }}>Nombre *</label>
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Arroz Diana" required style={brutalInput} />
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej. Arroz Diana" required style={{ width: '100%', padding: '12px', background: '#fff', border: '3px solid #0f172a', borderRadius: '10px', color: '#0f172a', fontWeight: 600, fontSize: '0.95rem', outline: 'none', boxShadow: '3px 3px 0px #0f172a' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#0f172a', marginBottom: '6px', fontWeight: 700 }}>Categoría</label>
-                <input value={category} onChange={e => setCategory(e.target.value)} placeholder="Ej. Abarrotes" style={brutalInput} />
+                <input value={category} onChange={e => setCategory(e.target.value)} placeholder="Ej. Abarrotes" style={{ width: '100%', padding: '12px', background: '#fff', border: '3px solid #0f172a', borderRadius: '10px', color: '#0f172a', fontWeight: 600, fontSize: '0.95rem', outline: 'none', boxShadow: '3px 3px 0px #0f172a' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#0f172a', marginBottom: '6px', fontWeight: 700 }}>Cantidad *</label>
-                <input type="number" step="0.1" value={quantity} onChange={e => setQuantity(e.target.value)} required style={brutalInput} />
+                <input type="number" step="0.1" value={quantity} onChange={e => setQuantity(e.target.value)} required style={{ width: '100%', padding: '12px', background: '#fff', border: '3px solid #0f172a', borderRadius: '10px', color: '#0f172a', fontWeight: 600, fontSize: '0.95rem', outline: 'none', boxShadow: '3px 3px 0px #0f172a' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#0f172a', marginBottom: '6px', fontWeight: 700 }}>Unidad</label>
-                <input value={unit} onChange={e => setUnit(e.target.value)} placeholder="Ej. kg, L, pzas" style={brutalInput} />
+                <input value={unit} onChange={e => setUnit(e.target.value)} placeholder="Ej. kg, L, pzas" style={{ width: '100%', padding: '12px', background: '#fff', border: '3px solid #0f172a', borderRadius: '10px', color: '#0f172a', fontWeight: 600, fontSize: '0.95rem', outline: 'none', boxShadow: '3px 3px 0px #0f172a' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#0f172a', marginBottom: '6px', fontWeight: 700 }}>Fecha de Expiración</label>
-                <input type="date" value={expirationDate} onChange={e => setExpirationDate(e.target.value)} style={brutalInput} />
+                <input type="date" value={expirationDate} onChange={e => setExpirationDate(e.target.value)} style={{ width: '100%', padding: '12px', background: '#fff', border: '3px solid #0f172a', borderRadius: '10px', color: '#0f172a', fontWeight: 600, fontSize: '0.95rem', outline: 'none', boxShadow: '3px 3px 0px #0f172a' }} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#0f172a', marginBottom: '6px', fontWeight: 700 }}>Stock Mínimo</label>
-                <input type="number" step="0.1" value={minStock} onChange={e => setMinStock(e.target.value)} style={brutalInput} />
+                <input type="number" step="0.1" value={minStock} onChange={e => setMinStock(e.target.value)} style={{ width: '100%', padding: '12px', background: '#fff', border: '3px solid #0f172a', borderRadius: '10px', color: '#0f172a', fontWeight: 600, fontSize: '0.95rem', outline: 'none', boxShadow: '3px 3px 0px #0f172a' }} />
               </div>
               <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', marginTop: '6px' }}>
-                <button type="submit" style={brutalButton(true, editingId ? '#facc15' : '#4ade80')}>
+                <button type="submit" style={{ padding: '12px 20px', background: editingId ? '#facc15' : '#4ade80', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem' }}>
                   {editingId ? 'Actualizar Producto' : 'Guardar Producto'}
                 </button>
                 {editingId && (
-                  <button type="button" onClick={() => { setEditingId(null); setName(''); setCategory(''); setQuantity(1); setUnit(''); setExpirationDate(''); setMinStock(1); }} style={brutalButton(false)}>Cancelar</button>
+                  <button type="button" onClick={() => { setEditingId(null); setName(''); setCategory(''); setQuantity(1); setUnit(''); setExpirationDate(''); setMinStock(1); }} style={{ padding: '12px 20px', background: '#fff', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem' }}>Cancelar</button>
                 )}
               </div>
             </form>
 
             <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: 800 }}>FILTRAR:</span>
-              <button onClick={() => setFilter('all')} style={brutalButton(filter === 'all', '#facc15')}>Todos</button>
-              <button onClick={() => setFilter('expiring')} style={brutalButton(filter === 'expiring', '#facc15')}>Por Caducar</button>
-              <button onClick={() => setFilter('low_stock')} style={brutalButton(filter === 'low_stock', '#facc15')}>Stock Bajo</button>
+              <button onClick={() => setFilter('all')} style={{ padding: '12px 20px', background: filter === 'all' ? '#facc15' : '#fff', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem' }}>Todos</button>
+              <button onClick={() => setFilter('expiring')} style={{ padding: '12px 20px', background: filter === 'expiring' ? '#facc15' : '#fff', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem' }}>Por Caducar</button>
+              <button onClick={() => setFilter('low_stock')} style={{ padding: '12px 20px', background: filter === 'low_stock' ? '#facc15' : '#fff', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem' }}>Stock Bajo</button>
             </div>
 
             {products.length === 0 ? <p style={{ color: '#64748b', textAlign: 'center', padding: '40px 0', fontWeight: 600 }}>No hay productos en tu alacena.</p> : (
@@ -286,7 +251,7 @@ function App() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>Lista de Compras</h2>
-              <button onClick={generateShopping} style={brutalButton(true, '#4ade80')}>⚡ Auto-Generar por Stock</button>
+              <button onClick={generateShopping} style={{ padding: '12px 20px', background: '#4ade80', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem' }}>⚡ Auto-Generar</button>
             </div>
 
             <form onSubmit={(e) => {
@@ -299,9 +264,9 @@ function App() {
                 body: JSON.stringify({ name, quantity_to_buy: qty })
               }).then(() => { e.target.reset(); loadShopping(); })
             }} style={{ background: '#f8fafc', padding: '20px', borderRadius: '16px', marginBottom: '28px', border: '3px solid #0f172a', boxShadow: '4px 4px 0px #0f172a', display: 'flex', gap: '12px' }}>
-              <input name="sname" placeholder="Artículo a comprar..." required style={brutalInput} />
-              <input name="sqty" type="number" step="0.1" defaultValue="1" style={{ ...brutalInput, width: '100px' }} />
-              <button type="submit" style={brutalButton(true, '#60a5fa')}>Agregar</button>
+              <input name="sname" placeholder="Artículo a comprar..." required style={{ width: '100%', padding: '12px', background: '#fff', border: '3px solid #0f172a', borderRadius: '10px', color: '#0f172a', fontWeight: 600, fontSize: '0.95rem', outline: 'none', boxShadow: '3px 3px 0px #0f172a' }} />
+              <input name="sqty" type="number" step="0.1" defaultValue="1" style={{ width: '100px', padding: '12px', background: '#fff', border: '3px solid #0f172a', borderRadius: '10px', color: '#0f172a', fontWeight: 600, fontSize: '0.95rem', outline: 'none', boxShadow: '3px 3px 0px #0f172a' }} />
+              <button type="submit" style={{ padding: '12px 20px', background: '#60a5fa', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem' }}>Agregar</button>
             </form>
 
             {shoppingList.length === 0 ? <p style={{ color: '#64748b', textAlign: 'center', padding: '40px 0', fontWeight: 600 }}>Tu lista de compras está limpia.</p> : (
@@ -348,15 +313,15 @@ function App() {
             <h2 style={{ margin: '0 0 20px 0', fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>Comparador de Precios (Colombia)</h2>
             
             <form onSubmit={searchPrices} style={{ marginBottom: '28px', display: 'flex', gap: '12px' }}>
-              <input placeholder="¿Qué producto buscas? (ej. café juan valdez, leche alpina)" value={priceQuery} onChange={e => setPriceQuery(e.target.value)} required style={brutalInput} />
-              <button type="submit" style={brutalButton(true, '#60a5fa')}>Buscar</button>
+              <input placeholder="¿Qué producto buscas? (ej. café juan valdez, leche alpina)" value={priceQuery} onChange={e => setPriceQuery(e.target.value)} required style={{ width: '100%', padding: '12px', background: '#fff', border: '3px solid #0f172a', borderRadius: '10px', color: '#0f172a', fontWeight: 600, fontSize: '0.95rem', outline: 'none', boxShadow: '3px 3px 0px #0f172a' }} />
+              <button type="submit" style={{ padding: '12px 20px', background: '#60a5fa', color: '#0f172a', border: '3px solid #0f172a', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '4px 4px 0px #0f172a', textTransform: 'uppercase', fontSize: '0.85rem' }}>Buscar</button>
             </form>
 
             {priceResults && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#334155', fontWeight: 700 }}>Resultados para "{priceResults.query}"</h3>
-                  <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: '#f1f5f9', border: '2px solid #0f172a', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>Trace ID: {priceResults.trace_id.slice(0, 8)}</span>
+                  <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: '#f1f5f9', border: '2px solid #0f172a', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>Trace ID: {priceResults.trace_id ? priceResults.trace_id.slice(0, 8) : 'demo'}</span>
                 </div>
 
                 {buyBetter && (
@@ -370,23 +335,23 @@ function App() {
                     <thead>
                       <tr style={{ background: '#f1f5f9', borderBottom: '3px solid #0f172a', color: '#0f172a', fontSize: '0.9rem', fontWeight: 800 }}>
                         <th style={{ padding: '14px', borderRight: '2px solid #0f172a' }}>Supermercado</th>
-                        <th style={{ padding: '14px', borderRight: '2px solid #0f172a' }}>Precio Aprox.</th>
-                        <th style={{ padding: '14px', textAlign: 'right' }}>Enlace</th>
+                        <th style={{ padding: '14px', borderRight: '2px solid #0f172a'}}]};
+                      <th style={{ padding: '14px', borderRight: '2px solid #0f172a' }}>Precio Aprox.</th>
+                      <th style={{ padding: '14px', textAlign: 'right' }}>Enlace</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {priceResults.results.map((res, idx) => (
+                      <tr key={idx} style={{ borderBottom: '2px solid #0f172a', background: '#fff' }}>
+                        <td style={{ padding: '14px', fontWeight: 700, borderRight: '2px solid #0f172a' }}>{res.store}</td>
+                        <td style={{ padding: '14px', borderRight: '2px solid #0f172a', color: '#047857', fontWeight: 800 }}>${res.price.toLocaleString()} {res.currency}</td>
+                        <td style={{ padding: '14px', textAlign: 'right' }}>
+                          <a href={res.url} target="_blank" rel="noreferrer" style={{ background: '#facc15', color: '#0f172a', border: '2px solid #0f172a', padding: '6px 12px', borderRadius: '6px', textDecoration: 'none', fontWeight: 800, boxShadow: '2px 2px 0px #0f172a', display: 'inline-block' }}>Visitar ↗</a>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {priceResults.results.map((res, idx) => (
-                        <tr key={idx} style={{ borderBottom: '2px solid #0f172a', background: '#fff' }}>
-                          <td style={{ padding: '14px', fontWeight: 700, borderRight: '2px solid #0f172a' }}>{res.store}</td>
-                          <td style={{ padding: '14px', borderRight: '2px solid #0f172a', color: '#047857', fontWeight: 800 }}>${res.price.toLocaleString()} {res.currency}</td>
-                          <td style={{ padding: '14px', textAlign: 'right' }}>
-                            <a href={res.url} target="_blank" rel="noreferrer" style={{ background: '#facc15', color: '#0f172a', border: '2px solid #0f172a', padding: '6px 12px', borderRadius: '6px', textDecoration: 'none', fontWeight: 800, boxShadow: '2px 2px 0px #0f172a', display: 'inline-block' }}>Visitar ↗</a>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

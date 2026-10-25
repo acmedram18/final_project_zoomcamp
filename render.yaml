@@ -20,7 +20,7 @@ services:
     plan: free
     dockerfilePath: ./frontend/Dockerfile
     envVars:
-      - key: VITE_API_URL
+      - key: VITE_API_BASE
         value: https://fiambreapp-backend.onrender.com
 
 databases:
