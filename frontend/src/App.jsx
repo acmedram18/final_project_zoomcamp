@@ -106,11 +106,18 @@ function App() {
     fetch(`${API_BASE}/shopping/buy/${id}`, { method: 'POST' }).then(() => { loadShopping(); loadProducts(); })
   }
 
+  const [buyBetter, setBuyBetter] = useState(null)
+
   const searchPrices = (e) => {
     e.preventDefault()
     fetch(`${API_BASE}/prices/search?q=${encodeURIComponent(priceQuery)}`)
       .then(r => r.json())
       .then(setPriceResults)
+
+    fetch(`${API_BASE}/prices/buy_better`)
+      .then(r => r.json())
+      .then(setBuyBetter)
+      .catch(() => setBuyBetter(null))
   }
 
   return (
@@ -261,6 +268,12 @@ function App() {
           {priceResults && (
             <div>
               <h3>Comparison Table for "{priceResults.query}" (Trace ID: {priceResults.trace_id})</h3>
+              
+              {buyBetter && (
+                <div style={{ background: '#d4edda', color: '#155724', padding: '10px 15px', borderRadius: 5, marginBottom: 15, border: '1px solid #c3e6cb' }}>
+                  <strong>💡 Buy Better Suggestion:</strong> {buyBetter.suggestion}
+                </div>
+              )}
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20 }}>
                 <thead>
                   <tr style={{ background: '#eee', textAlign: 'left' }}>
