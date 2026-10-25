@@ -74,3 +74,17 @@ def expiring_soon(days: int = 7, db: Session = Depends(get_db)):
     limit = today + timedelta(days=days)
     products = db.query(Product).filter(Product.expiration_date != None, Product.expiration_date >= today, Product.expiration_date <= limit).all()
     return [{"id": p.id, "name": p.name, "expiration_date": p.expiration_date.isoformat() if p.expiration_date else None, "quantity": p.quantity} for p in products]
+
+
+@router.get("/alerts/expiring")
+def alerts_expiring(days: int = 3, db: Session = Depends(get_db)):
+    from datetime import date, timedelta
+    from app.models.product import Product
+    import uuid
+    today = date.today()
+    limit = today + timedelta(days=days)
+    products = db.query(Product).filter(Product.expiration_date != None, Product.expiration_date >= today, Product.expiration_date <= limit).all()
+    if products:
+        trace_id = str(uuid.uuid4())
+        return {"alert": True, "severity": "high", "count": len(products), "trace_id": trace_id, "products": [{"id": p.id, "name": p.name, "expiration_date": p.expiration_date.isoformat()} for p in products]}
+    return {"alert": False}
