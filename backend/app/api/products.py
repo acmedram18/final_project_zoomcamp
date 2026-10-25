@@ -44,3 +44,23 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     if db_product is None:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"ok": True}
+
+
+@router.post("/{product_id}/out_of_stock")
+def mark_out_of_stock(product_id: int, db: Session = Depends(get_db)):
+    db_product = crud.product.get_product(db, product_id=product_id)
+    if db_product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    db_product.quantity = 0
+    db_product.status = "out_of_stock"
+    db.commit()
+    db.refresh(db_product)
+    # auto-add to shopping list
+    from app.models.shopping import ShoppingListItem
+    existing = db.query(ShoppingListItem).filter(ShoppingListItem.product_id == product_id, ShoppingListItem.status == "pending").first()
+    if not existing:
+        item = ShoppingListItem(product_id=product_id, name=db_product.name, quantity_suggested=db_product.min_stock or 1, quantity_to_buy=db_product.min_stock or 1, source="out_of_stock", status="pending")
+        db.add(item)
+        db.commit()
+        db.refresh(item)
+    return {"ok": True, "product": db_product}

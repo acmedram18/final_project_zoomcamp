@@ -17,3 +17,9 @@ try:
     app.include_router(products.router)
 except Exception:
     pass
+
+try:
+    from app.api import shopping
+    app.include_router(shopping.router)
+except Exception:
+    pass
