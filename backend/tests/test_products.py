@@ -58,3 +58,17 @@ def test_expiring_alert_has_trace_id():
     data = r2.json()
     assert data["alert"] is True
     assert "trace_id" in data
+
+
+def test_price_search_and_buy_better():
+    from app.main import app
+    from fastapi.testclient import TestClient
+    client = TestClient(app)
+    r = client.get("/prices/search?q=milk")
+    assert r.status_code == 200
+    data = r.json()
+    assert "results" in data and len(data["results"]) >= 2
+    assert "trace_id" in data
+    r2 = client.get("/prices/buy_better")
+    assert r2.status_code == 200
+    assert "suggestion" in r2.json()
