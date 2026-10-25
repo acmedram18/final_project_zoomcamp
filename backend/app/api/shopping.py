@@ -36,3 +36,21 @@ def generate_shopping(db: Session = Depends(get_db)):
                 created += 1
     db.commit()
     return {"created": created}
+
+
+@router.post("/buy/{item_id}")
+def buy_item(item_id: int, db: Session = Depends(get_db)):
+    from app.models.shopping import ShoppingListItem
+    from app.models.product import Product
+    item = db.query(ShoppingListItem).filter(ShoppingListItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if item.product_id:
+        prod = db.query(Product).filter(Product.id == item.product_id).first()
+        if prod:
+            prod.quantity = (prod.quantity or 0) + (item.quantity_to_buy or item.quantity_suggested or 0)
+            if prod.quantity > 0:
+                prod.status = "in_stock"
+    item.status = "bought"
+    db.commit()
+    return {"ok": True}
