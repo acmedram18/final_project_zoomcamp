@@ -72,3 +72,20 @@ def test_price_search_and_buy_better():
     r2 = client.get("/prices/buy_better")
     assert r2.status_code == 200
     assert "suggestion" in r2.json()
+
+
+def test_observability_and_oncall():
+    from app.main import app
+    from fastapi.testclient import TestClient
+    client = TestClient(app)
+    r = client.get("/obs/metrics")
+    assert r.status_code == 200
+    r2 = client.get("/obs/trace")
+    assert r2.status_code == 200 and "trace_id" in r2.json()
+    r3 = client.post("/obs/alert/trigger")
+    assert r3.status_code == 200
+    r4 = client.post("/oncall/respond", json={"type": "expiring_soon"})
+    assert r4.status_code == 200
+    data = r4.json()
+    assert "actions_taken" in data and len(data["actions_taken"]) > 0
+    assert "incident_id" in data
