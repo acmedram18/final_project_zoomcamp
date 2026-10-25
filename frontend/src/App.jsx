@@ -122,10 +122,10 @@ function App() {
       {/* Modern Header */}
       <header style={{ marginBottom: '32px', textAlign: 'center' }}>
         <h1 style={{ margin: 0, fontSize: '2.2rem', fontWeight: 800, background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px' }}>
-          Smart Pantry & Price Comparator
+          FiambreApp: La alacena del ahorro
         </h1>
         <p style={{ margin: '8px 0 0 0', color: '#9ca3af', fontSize: '0.95rem' }}>
-          Gestión inteligente de despensa y comparación de precios en tiempo real
+          Gestión inteligente de despensa y comparación de precios en supermercados colombianos
         </p>
       </header>
 
