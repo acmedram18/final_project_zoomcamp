@@ -64,3 +64,13 @@ def mark_out_of_stock(product_id: int, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(item)
     return {"ok": True, "product": db_product}
+
+
+@router.get("/expiring/soon")
+def expiring_soon(days: int = 7, db: Session = Depends(get_db)):
+    from datetime import date, timedelta
+    from app.models.product import Product
+    today = date.today()
+    limit = today + timedelta(days=days)
+    products = db.query(Product).filter(Product.expiration_date != None, Product.expiration_date >= today, Product.expiration_date <= limit).all()
+    return [{"id": p.id, "name": p.name, "expiration_date": p.expiration_date.isoformat() if p.expiration_date else None, "quantity": p.quantity} for p in products]
