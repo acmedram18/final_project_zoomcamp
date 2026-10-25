@@ -47,3 +47,12 @@ try:
     app.include_router(oncall.router)
 except Exception:
     pass
+
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
