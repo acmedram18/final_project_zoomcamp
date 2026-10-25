@@ -158,7 +158,7 @@ function App() {
             
             <form onSubmit={saveProduct} style={{ background: '#1f2937', padding: '20px', borderRadius: '12px', marginBottom: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
-                <h3 style={{ margin: 0, fontSize: '1rem', color: '#60a5fa', fontWeight: 600 }}>{editingId ? 'Editar Producto' : 'Agregar Nuevo Producto'}</h3>
+                <h3 style={{ margin: 0, fontSize: '1rem', color: '#60a5fa', fontWeight: 600 }}>{editingId ? 'Editar Producto' : 'Agregar Producto'}</h3>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#9ca3af', marginBottom: '6px' }}>Nombre *</label>
