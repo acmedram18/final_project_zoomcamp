@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: fiambreapp-backend
+    env: docker
+    region: ohio
+    plan: free
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fiambreapp-db
+          property: connectionString
+      - key: SERPER_API_KEY
+        sync: false
+
+  - type: web
+    name: fiambreapp-frontend
+    env: docker
+    region: ohio
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile
+    envVars:
+      - key: VITE_API_URL
+        value: https://fiambreapp-backend.onrender.com
+
+databases:
+  - name: fiambreapp-db
+    databaseName: smartpantry
+    user: smartuser
+    plan: free
