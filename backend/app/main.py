@@ -35,3 +35,9 @@ try:
     base.Base.metadata.create_all(bind=database.engine)
 except Exception:
     pass
+
+try:
+    from app.api import observability
+    app.include_router(observability.router)
+except Exception:
+    pass
