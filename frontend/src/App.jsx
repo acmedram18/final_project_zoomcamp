@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
+const API_BASE = 'http://localhost:8080'
+
 function App() {
   const [products, setProducts] = useState([])
   const [name, setName] = useState('')
@@ -11,12 +13,15 @@ function App() {
   const [filter, setFilter] = useState('all')
 
   const loadProducts = () => {
-    let url = '/api/products/'
-    if (filter === 'expiring') url = '/api/products/expiring/soon?days=7'
+    let url = `${API_BASE}/products/`
+    if (filter === 'expiring') url = `${API_BASE}/products/expiring/soon?days=7`
     fetch(url)
       .then(r => r.ok ? r.json() : [])
       .then(setProducts)
-      .catch(() => setProducts([]))
+      .catch(err => {
+        console.error('Fetch error:', err)
+        setProducts([])
+      })
   }
 
   useEffect(() => {
@@ -25,7 +30,7 @@ function App() {
 
   const addProduct = (e) => {
     e.preventDefault()
-    fetch('/api/products/', {
+    fetch(`${API_BASE}/products/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -47,15 +52,16 @@ function App() {
       setMinStock(1)
       loadProducts()
     })
+    .catch(err => console.error('Add error:', err))
   }
 
   const deleteProduct = (id) => {
-    fetch(`/api/products/${id}`, { method: 'DELETE' })
+    fetch(`${API_BASE}/products/${id}`, { method: 'DELETE' })
       .then(() => loadProducts())
   }
 
   const markOutOfStock = (id) => {
-    fetch(`/api/products/${id}/out_of_stock`, { method: 'POST' })
+    fetch(`${API_BASE}/products/${id}/out_of_stock`, { method: 'POST' })
       .then(() => loadProducts())
   }
 
