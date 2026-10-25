@@ -1,99 +1,99 @@
 # FiambreApp: La alacena del ahorro 🛒🥦
 
-> **Un gestor de despensa inteligente y comparador de precios en tiempo real para hogares en Colombia.**
+> **An intelligent pantry manager and real-time price comparator for households in Colombia.**
 > *Full-Stack Monorepo | FastAPI + React + PostgreSQL | AI Price Search & On-Call Agent*
 
 ---
 
-## 🎯 Problema y Solución
-### El Problema
-El desperdicio de comida y los gastos innecesarios de mercado son problemas cotidianos en los hogares colombianos. Las familias suelen olvidar qué productos tienen en la alacena hasta que vencen, compran duplicados o terminan pagando de más por no comparar precios entre los principales supermercados (Éxito, Jumbo, Carulla, etc.).
+## 🎯 Problem & Solution
+### The Problem
+Food waste and unnecessary grocery spending are common household problems in Colombia. Families often forget what products they have in their pantry until they expire, buy duplicates, or end up paying too much by failing to compare prices across major supermarkets (Éxito, Jumbo, Carulla, etc.).
 
-### La Solución: FiambreApp
-**FiambreApp** ayuda a los usuarios a:
-1.  **Inventario de Alacena (CRUD)**: Mantener el control de cantidades, unidades, categorías, fechas de caducidad y stock mínimo.
-2.  **Alertas de Expiración**: Priorizar el consumo de alimentos próximos a vencer (con trazabilidad mediante `Trace ID`).
-3.  **Lista de Compras Inteligente**: Auto-generar artículos faltantes por stock bajo o al marcar productos como "Agotados", y reabastecer al comprarlos.
-4.  **Comparador de Precios Web (Serper + IA)**: Buscar precios reales en supermercados colombianos y sugerir la mejor opción de compra (*"Comprar Mejor"*).
+### The Solution: FiambreApp
+**FiambreApp** empowers users to:
+1.  **Pantry Inventory (CRUD)**: Keep track of quantities, units, categories, expiration dates, and minimum stock levels.
+2.  **Expiration Alerts**: Prioritize consumption of soon-to-expire food items (with observability trace tracking via `Trace ID`).
+3.  **Smart Shopping List**: Auto-generate missing items based on low stock or by marking products as "Out of Stock", and restock them upon purchase.
+4.  **Web Price Search (Serper + AI)**: Search real-time prices across Colombian supermarkets and suggest the best purchase option (*"Buy Better"*).
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## 🏗️ System Architecture
 
 ```mermaid
 graph TD
-    User[Navegador Web] -->|HTTP| Frontend[React / Vite Frontend]
+    User[Web Browser] -->|HTTP| Frontend[React / Vite Frontend]
     Frontend -->|Proxy / REST| Backend[FastAPI Backend]
     
-    subgraph "Infraestructura"
+    subgraph "Infrastructure"
         Backend -->|SQLAlchemy| DB[(PostgreSQL)]
     end
     
-    subgraph "Motor AI & Precios"
+    subgraph "AI Core & Prices"
         Backend -->|Serper API| Google[Google Search CO]
         Backend -->|Telemetry| Obs[Logs & Traces]
     end
 ```
 
-## 🛠️ Stack Tecnológico
+## 🛠️ Tech Stack
 
--   **Frontend**: ⚛️ **React 18**, **Vite**, **JavaScript/JSX**, con un diseño moderno estilo Neobrutalism en Modo Light.
--   **Backend**: ⚡ **FastAPI (Python 3.11)**. API REST asíncrona que gestiona inventarios, alertas, lista de compras y búsqueda web de precios en Colombia.
--   **Base de Datos**: 🏛️ **PostgreSQL 15** (con soporte para SQLite en testing).
--   **Containerización**: 🐋 **Docker** y **Docker Compose** para ejecución con un solo comando.
+-   **Frontend**: ⚛️ **React 18**, **Vite**, **JavaScript/JSX**, featuring a modern Neobrutalism light-mode design.
+-   **Backend**: ⚡ **FastAPI (Python 3.11)**. High-performance asynchronous REST API handling inventory, alerts, shopping lists, and web price searches in Colombia.
+-   **Database**: 🏛️ **PostgreSQL 15** (with SQLite support for isolated testing).
+-   **Containerization**: 🐋 **Docker** and **Docker Compose** for single-command orchestration.
 
 ---
 
-## 🚀 Ejecución Local (Guía Rápida con Docker)
+## 🚀 Local Development (Fresh Clone Guide)
 
-**Prerrequisitos**: Docker Desktop.
+**Prerequisites**: Docker Desktop.
 
-1. **Clonar y Entrar al Repositorio**
+1. **Clone and Enter Repository**
    ```bash
    git clone https://github.com/acmedram18/final_project_zoomcamp.git
    cd final_project_zoomcamp
    ```
 
-2. **Levantar el Sistema Completo**
+2. **Start the Full Stack**
    ```bash
    docker compose up --build -d
    ```
-   Esta orden levantará PostgreSQL, el Backend y el Frontend simultáneamente.
+   This command starts PostgreSQL, Backend, and Frontend containers simultaneously.
 
-3. **URLs de Acceso**
+3. **Access URLs**
    - **Frontend (FiambreApp)**: `http://localhost:3001`
-   - **Documentación de la API (Swagger UI)**: `http://localhost:8080/docs`
+   - **API Documentation (Swagger UI)**: `http://localhost:8080/docs`
    - **Health Check**: `http://localhost:8080/health`
 
-4. **Ejecutar Pruebas Automatizadas**
+4. **Run Automated Tests**
    ```bash
    ./test.sh
-   # o bien:
+   # or:
    make test
    ```
 
 ---
 
-## 🤖 Capacidades de Agentes y Observabilidad (AGENTS.md)
-Este proyecto integra especificaciones avanzadas de agentes y observabilidad:
-- **Habilidades Reutilizables**: `agent-capabilities/skills/optimize-shopping-list/`
-- **Subagentes**: `agent-capabilities/subagents/oncall-investigator.md`
-- **Servidor MCP**: `mcp-server/` (herramientas de búsqueda de precios)
-- **Guardrails y Hooks**: `agent-hooks/` y políticas en `docs/permissions.md`.
+## 🤖 Agent Capabilities & Observability (AGENTS.md)
+This project incorporates advanced agent and observability specifications:
+- **Reusable Skills**: `agent-capabilities/skills/optimize-shopping-list/`
+- **Subagents**: `agent-capabilities/subagents/oncall-investigator.md`
+- **MCP Server**: `mcp-server/` (price search tools)
+- **Guardrails & Hooks**: `agent-hooks/` and policies in `docs/permissions.md`.
 
 ---
 
-## 📋 Criterios de Aceptación (Evaluados)
+## 📋 Acceptance Criteria (Evaluated)
 
-| Criterio | Estado | Evidencia / Ruta |
+| Criterion | Status | Evidence / Path |
 | :--- | :---: | :--- |
-| **CRUD de Inventario** | ✅ Cumplido | `backend/app/api/products.py` |
-| **Marcar Agotado -> Lista de Compras** | ✅ Cumplido | `backend/app/api/shopping.py` |
-| **Alertas de Expiración (Trace ID)** | ✅ Cumplido | `backend/app/api/products.py` (`/alerts/expiring`) |
-| **Búsqueda de Precios y "Comprar Mejor"** | ✅ Cumplido | `backend/app/api/prices.py` (Serper API) |
-| **Ejecución con un Solo Comando** | ✅ Cumplido | `docker compose up --build` |
-| **Tests Unitarios e Integración** | ✅ Cumplido | `backend/tests/` |
+| **Inventory CRUD** | ✅ Met | `backend/app/api/products.py` |
+| **Mark Out of Stock -> Shopping List** | ✅ Met | `backend/app/api/shopping.py` |
+| **Expiration Alerts (Trace ID)** | ✅ Met | `backend/app/api/products.py` (`/alerts/expiring`) |
+| **Price Search & "Buy Better"** | ✅ Met | `backend/app/api/prices.py` (Serper API) |
+| **Single-Command Execution** | ✅ Met | `docker compose up --build` |
+| **Unit & Integration Tests** | ✅ Met | `backend/tests/` |
 
 ---
 
-*Desarrollado como parte del [AI Dev Tools Zoomcamp](https://github.com/DataTalksClub/ai-dev-tools-zoomcamp) - Proyecto Final.*
+*Developed as part of the [AI Dev Tools Zoomcamp](https://github.com/DataTalksClub/ai-dev-tools-zoomcamp) - Final Project.*
