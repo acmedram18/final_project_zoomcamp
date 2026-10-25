@@ -5,6 +5,7 @@ services:
     region: ohio
     plan: free
     dockerfilePath: ./backend/Dockerfile
+    rootDir: backend
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -19,6 +20,7 @@ services:
     region: ohio
     plan: free
     dockerfilePath: ./frontend/Dockerfile
+    rootDir: frontend
     envVars:
       - key: VITE_API_URL
         value: https://fiambreapp-backend.onrender.com
