@@ -53,7 +53,7 @@ def test_expiring_alert_has_trace_id():
     soon = (date.today() + timedelta(days=2)).isoformat()
     r = client.post("/products/", json={"name": "Yogurt", "quantity": 1, "unit": "cup", "expiration_date": soon})
     assert r.status_code == 200
-    r2 = client.get("/alerts/expiring?days=3")
+    r2 = client.get("/products/alerts/expiring?days=3")
     assert r2.status_code == 200
     data = r2.json()
     assert data["alert"] is True
