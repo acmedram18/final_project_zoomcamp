@@ -1,1 +1,5 @@
 backend/*.db
+.env
+*.env
+secrets/
+credentials/
