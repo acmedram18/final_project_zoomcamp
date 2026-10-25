@@ -54,3 +54,26 @@ def buy_item(item_id: int, db: Session = Depends(get_db)):
     item.status = "bought"
     db.commit()
     return {"ok": True}
+
+@router.post("/")
+def add_shopping_item(item: dict, db: Session = Depends(get_db)):
+    db_item = ShoppingListItem(
+        name=item.get("name"),
+        quantity_suggested=item.get("quantity_to_buy", 1),
+        quantity_to_buy=item.get("quantity_to_buy", 1),
+        source="manual",
+        status="pending"
+    )
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+@router.delete("/{item_id}")
+def delete_shopping_item(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(ShoppingListItem).filter(ShoppingListItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    db.delete(item)
+    db.commit()
+    return {"ok": True}
