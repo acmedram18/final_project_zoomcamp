@@ -41,3 +41,9 @@ try:
     app.include_router(observability.router)
 except Exception:
     pass
+
+try:
+    from app.api import oncall
+    app.include_router(oncall.router)
+except Exception:
+    pass
