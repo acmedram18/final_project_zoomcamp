@@ -18,3 +18,21 @@ def get_db():
 def list_shopping(db: Session = Depends(get_db)):
     items = db.query(ShoppingListItem).all()
     return [{"id": i.id, "product_id": i.product_id, "name": i.name, "quantity_suggested": i.quantity_suggested, "quantity_to_buy": i.quantity_to_buy, "source": i.source, "status": i.status} for i in items]
+
+
+@router.post("/generate")
+def generate_shopping(db: Session = Depends(get_db)):
+    from app.models.product import Product
+    from app.models.shopping import ShoppingListItem
+    created = 0
+    # from low stock
+    products = db.query(Product).all()
+    for p in products:
+        if p.min_stock and p.quantity < p.min_stock:
+            exists = db.query(ShoppingListItem).filter(ShoppingListItem.product_id == p.id, ShoppingListItem.status == "pending").first()
+            if not exists:
+                item = ShoppingListItem(product_id=p.id, name=p.name, quantity_suggested=p.min_stock - p.quantity, quantity_to_buy=p.min_stock - p.quantity, source="low_stock", status="pending")
+                db.add(item)
+                created += 1
+    db.commit()
+    return {"created": created}
