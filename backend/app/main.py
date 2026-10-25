@@ -16,21 +16,47 @@ app.add_middleware(
 def health():
     return {"status": "ok"}
 
-from app.api import products, shopping, prices, observability, oncall
-from app.core import database
-from app.models import base, product, shopping as shopping_model, price as price_model
-
-@app.on_event("startup")
-def on_startup():
+@app.get("/debug-db")
+def debug_db():
+    from app.core import database
+    import sqlalchemy
     try:
-        base.Base.metadata.create_all(bind=database.engine)
-        print("Database tables verified/created successfully.")
+        engine = database.engine
+        with engine.connect() as conn:
+            res = conn.execute(sqlalchemy.text("SELECT 1"))
+            return {"connected": True, "result": [r[0] for r in res]}
     except Exception as e:
-        print("Error during database initialization:", e)
-        traceback.print_exc()
+        return {"connected": False, "error": str(e)}
 
-app.include_router(products.router)
-app.include_router(shopping.router)
-app.include_router(prices.router)
-app.include_router(observability.router)
-app.include_router(oncall.router)
+try:
+    from app.api import products
+    from app.core import database
+    from app.models import base, product, shopping
+    base.Base.metadata.create_all(bind=database.engine)
+    app.include_router(products.router)
+except Exception as e:
+    print("Products router/db error:", e)
+
+try:
+    from app.api import shopping
+    app.include_router(shopping.router)
+except Exception:
+    pass
+
+try:
+    from app.api import prices
+    app.include_router(prices.router)
+except Exception:
+    pass
+
+try:
+    from app.api import observability
+    app.include_router(observability.router)
+except Exception:
+    pass
+
+try:
+    from app.api import oncall
+    app.include_router(oncall.router)
+except Exception:
+    pass
