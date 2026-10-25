@@ -23,3 +23,9 @@ try:
     app.include_router(shopping.router)
 except Exception:
     pass
+
+try:
+    from app.api import prices
+    app.include_router(prices.router)
+except Exception:
+    pass
