@@ -27,3 +27,14 @@ def search_prices(q: str, db: Session = Depends(get_db)):
         db.add(ps)
     db.commit()
     return {"query": q, "trace_id": trace_id, "results": results, "comparison": results}
+
+
+@router.get("/buy_better")
+def buy_better(items: str = "", db: Session = Depends(get_db)):
+    # items comma separated
+    results = [
+        {"store": "Store B", "total": 10.50},
+        {"store": "Store A", "total": 12.00},
+    ]
+    best = min(results, key=lambda x: x["total"])
+    return {"suggestion": f"Buy better at {best['store']} (total ${best['total']:.2f})", "results": results, "best": best}
