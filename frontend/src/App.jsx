@@ -41,10 +41,18 @@ function App() {
       .catch(() => setShoppingList([]))
   }
 
+
+  const [expiryAlert, setExpiryAlert] = useState(null)
+
   useEffect(() => {
     loadProducts()
     loadShopping()
+    fetch(`${API_BASE}/products/alerts/expiring?days=3`)
+      .then(r => r.json())
+      .then(setExpiryAlert)
+      .catch(() => setExpiryAlert(null))
   }, [filter, tab])
+
 
   const saveProduct = (e) => {
     e.preventDefault()
@@ -107,7 +115,16 @@ function App() {
 
   return (
     <div style={{ padding: 20, fontFamily: 'Arial', maxWidth: 950, margin: '0 auto' }}>
+      
       <h1>Smart Pantry & Price Comparator</h1>
+      
+      {expiryAlert && expiryAlert.alert && (
+        <div style={{ background: '#f8d7da', color: '#721c24', padding: '10px 15px', borderRadius: 5, marginBottom: 15, border: '1px solid #f5c6cb' }}>
+          <strong>⚠️ High Severity Alert:</strong> {expiryAlert.count} product(s) expiring in the next 3 days! 
+          <span style={{ fontSize: 'small', marginLeft: 10, fontFamily: 'monospace' }}>[Trace ID: {expiryAlert.trace_id}]</span>
+        </div>
+      )}
+
       
       <div style={{ marginBottom: 20, borderBottom: '2px solid #ddd', paddingBottom: 10 }}>
         <button onClick={() => setTab('inventory')} style={{ marginRight: 10, padding: '8px 16px', background: tab === 'inventory' ? '#007bff' : '#f8f9fa', color: tab === 'inventory' ? '#fff' : '#333', border: '1px solid #ccc', borderRadius: 4, cursor: 'pointer' }}>Pantry Inventory</button>
@@ -271,3 +288,5 @@ function App() {
 }
 
 export default App
+
+// Alert component for expiration and traces
