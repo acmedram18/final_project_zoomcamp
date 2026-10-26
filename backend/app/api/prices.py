@@ -99,12 +99,18 @@ def search_prices(q: str, db: Session = Depends(get_db)):
     return {"query": q, "trace_id": trace_id, "results": results, "comparison": results}
 
 @router.get("/buy_better")
-def buy_better(items: str = "", db: Session = Depends(get_db)):
+def buy_better(q: str = "", items: str = "", db: Session = Depends(get_db)):
     try:
-        results = [
-            {"store": "Jumbo", "total": 15600.0},
-            {"store": "Éxito", "total": 16200.0},
-        ]
+        results = []
+        if q:
+            res = search_prices(q=q, db=db)
+            for r in res.get("results", []):
+                results.append({"store": r["store"], "total": r["price"], "url": r["url"]})
+        if not results:
+            results = [
+                {"store": "Jumbo", "total": 15600.0},
+                {"store": "Éxito", "total": 16200.0},
+            ]
         best = min(results, key=lambda x: x["total"])
         return {"suggestion": f"Buy better at {best['store']} (total ${best['total']:,.2f} COP)", "results": results, "best": best}
     except Exception:
