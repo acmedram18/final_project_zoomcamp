@@ -1,7 +1,6 @@
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@db:5432/smartpantry")
-# Render uses postgres://, but SQLAlchemy 2+ requires postgresql://
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./fallback.db")
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
