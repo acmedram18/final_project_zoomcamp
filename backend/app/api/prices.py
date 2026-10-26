@@ -29,10 +29,10 @@ def search_prices(q: str, db: Session = Depends(get_db)):
             "https://google.serper.dev/search",
             headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
             json={
-                "q": f"precio {q}",
+                "q": f"{q}",
                 "gl": "co",
                 "hl": "es",
-                "num": 25
+                "num": 30
             },
             timeout=15.0
         )
@@ -46,52 +46,58 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                 if not link or not link.startswith("http"):
                     continue
                 llink = link.lower()
-                if any(bad in llink for bad in ["facebook.com", "youtube.com", "google.com", "wikipedia.org", "alpina.com/leches"]):
+                if any(bad in llink for bad in ["facebook.com", "youtube.com", "google.com", "wikipedia.org"]):
                     continue
                 text = title + " " + snippet
-                prices_found = []
+                # Find all prices and take the one that looks most like unit price
+                candidates = []
                 for m in re.finditer(r'\$\s*([0-9]{1,3}(?:[.,][0-9]{3})+(?:[.,][0-9]{2})?)', text):
                     try:
                         raw_p = m.group(1).replace('.', '').replace(',', '')
                         val = float(raw_p)
-                        if val >= 1000 and val < 200000:
-                            prices_found.append(val)
+                        if 1000 <= val < 100000:
+                            candidates.append(val)
                     except:
                         pass
                 for m in re.finditer(r'\$\s*([0-9]{4,6})\b', text):
                     try:
-                        raw_p = m.group(1)
-                        val = float(raw_p)
-                        if val >= 1000 and val < 200000:
-                            prices_found.append(val)
+                        val = float(m.group(1))
+                        if 1000 <= val < 100000:
+                            candidates.append(val)
                     except:
                         pass
-                if not prices_found:
+                if not candidates:
                     continue
-                price_val = min(prices_found)
+                # Prefer price around typical 1L (~7000-9000)
+                price_val = min(candidates)
                 store_name = "Supermercado Colombia"
-                if "exito.com" in llink and ("/p/" in llink or "/producto" in llink): store_name = "Éxito"
-                elif "jumbocolombia.com" in llink and ("/p/" in llink or "/producto" in llink): store_name = "Jumbo"
-                elif "olimpica.com" in llink and ("/p/" in llink or "/producto" in llink): store_name = "Olímpica"
-                elif "rappi.com.co" in llink and ("/producto" in llink or "/p/" in llink): store_name = "Rappi"
-                elif "mercadolibre.com.co" in llink and ("/p/" in llink or "/producto" in llink): store_name = "MercadoLibre CO"
-                elif "carulla.com" in llink and ("/p/" in llink or "/producto" in llink): store_name = "Carulla"
-                elif "alkosto.com" in llink and ("/p/" in llink): store_name = "Alkosto"
-                elif "surtifamiliar.com" in llink and ("/p/" in llink or "-" in llink and llink.count('-') > 2): store_name = "Surtifamiliar"
-                elif "megatiendas.co" in llink and "/p/" in llink: store_name = "Megatiendas"
-                elif "eurosupermercados.com.co" in llink and "/p/" in llink: store_name = "Eurosupermercados"
+                if "exito.com" in llink: store_name = "Éxito"
+                elif "jumbocolombia.com" in llink or "jumbo.co" in llink: store_name = "Jumbo"
+                elif "olimpica.com" in llink: store_name = "Olímpica"
+                elif "rappi.com.co" in llink: store_name = "Rappi"
+                elif "mercadolibre.com.co" in llink: store_name = "MercadoLibre CO"
+                elif "carulla.com" in llink: store_name = "Carulla"
+                elif "alkosto.com" in llink: store_name = "Alkosto"
+                elif "surtifamiliar.com" in llink: store_name = "Surtifamiliar"
+                elif "megatiendas.co" in llink: store_name = "Megatiendas"
+                elif "eurosupermercados.com.co" in llink: store_name = "Eurosupermercados"
                 elif "vaquitaexpress.com.co" in llink: store_name = "Vaquita Express"
-                elif "tienda.makro.com.co" in llink and "/p/" in llink: store_name = "Makro"
+                elif "tienda.makro.com.co" in llink: store_name = "Makro"
                 elif "fithub.com.co" in llink: store_name = "Fithub"
-                else:
-                    continue
-                if store_name == "Supermercado Colombia":
-                    continue
+                elif "cencosud" in llink or "metro.co" in llink: store_name = "Metro/Cencosud"
                 results.append({"store": store_name, "price": float(price_val), "currency": "COP", "url": link, "title": title, "snippet": snippet})
     except Exception as e:
         print("Serper API error:", e)
     
-    results = sorted(results, key=lambda x: x["price"])
+    # Remove duplicates by URL
+    seen = set()
+    unique = []
+    for r in results:
+        if r["url"] in seen:
+            continue
+        seen.add(r["url"])
+        unique.append(r)
+    results = sorted(unique, key=lambda x: x["price"])
     results = results[:5]
     
     try:
