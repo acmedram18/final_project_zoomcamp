@@ -29,10 +29,10 @@ def search_prices(q: str, db: Session = Depends(get_db)):
             "https://google.serper.dev/search",
             headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
             json={
-                "q": f"{q} colombia precio",
+                "q": f"{q} precio",
                 "gl": "co",
                 "hl": "es",
-                "num": 40
+                "num": 30
             },
             timeout=15.0
         )
@@ -48,13 +48,15 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                 llink = link.lower()
                 if any(bad in llink for bad in ["facebook.com", "youtube.com", "google.com", "wikipedia.org", "mercadolibre.com.co/listado"]):
                     continue
+                if "alpina.com" in llink:
+                    continue
                 text = title + " " + snippet
                 candidates = []
                 for m in re.finditer(r'\$\s*([0-9]{1,3}(?:[.,][0-9]{3})+(?:[.,][0-9]{2})?)', text):
                     try:
                         raw_p = m.group(1).replace('.', '').replace(',', '')
                         val = float(raw_p)
-                        if 500 <= val < 200000:
+                        if 1000 <= val < 150000:
                             candidates.append(val)
                     except:
                         pass
@@ -77,11 +79,11 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                 elif "fithub.com.co" in llink: store_name = "Fithub"
                 elif "oxxo" in llink: store_name = "OXXO"
                 elif "mercacentro.com" in llink: store_name = "Mercacentro"
+                elif "farmatodo.com.co" in llink: store_name = "Farmatodo"
                 results.append({"store": store_name, "price": float(price_val), "currency": "COP", "url": link, "title": title, "snippet": snippet})
     except Exception as e:
         print("Serper API error:", e)
     
-    # deduplicate by store keeping lowest price
     best_by_store = {}
     for r in results:
         key = r["store"]
@@ -89,7 +91,7 @@ def search_prices(q: str, db: Session = Depends(get_db)):
             best_by_store[key] = r
     results = list(best_by_store.values())
     results = sorted(results, key=lambda x: x["price"])
-    results = results[:8]
+    results = results[:6]
     
     try:
         for r in results:
