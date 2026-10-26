@@ -43,9 +43,10 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                 title = item.get("title", "")
                 snippet = item.get("snippet", "")
                 link = item.get("link", "")
-                if not link:
+                if not link or not link.startswith("http"):
                     continue
-                if any(bad in link.lower() for bad in ["pdf", "wikipedia", "arxiv", "edu", "gov", "jstor", "scielo", "facebook.com", "youtube.com"]):
+                llink = link.lower()
+                if any(bad in llink for bad in ["facebook.com", "youtube.com", "google.com", "wikipedia.org"]):
                     continue
                 text = title + " " + snippet
                 prices_found = []
@@ -53,15 +54,7 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                     try:
                         raw_p = m.group(1).replace('.', '').replace(',', '')
                         val = float(raw_p)
-                        if val > 1000 and val < 500000:
-                            prices_found.append(val)
-                    except:
-                        pass
-                for m in re.finditer(r'\$\s*([0-9]{4,6})\b', text):
-                    try:
-                        raw_p = m.group(1)
-                        val = float(raw_p)
-                        if val > 1000 and val < 500000:
+                        if val >= 500 and val < 200000:
                             prices_found.append(val)
                     except:
                         pass
@@ -69,15 +62,17 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                     continue
                 price_val = min(prices_found)
                 store_name = "Supermercado Colombia"
-                l_lower = link.lower()
-                if "exito" in l_lower: store_name = "Éxito"
-                elif "jumbo" in l_lower or "jumbocolombia" in l_lower: store_name = "Jumbo"
-                elif "olimpica" in l_lower: store_name = "Olímpica"
-                elif "rappi" in l_lower: store_name = "Rappi"
-                elif "mercadolibre" in l_lower: store_name = "MercadoLibre CO"
-                elif "carulla" in l_lower: store_name = "Carulla"
-                elif "alkosto" in l_lower: store_name = "Alkosto"
-                elif "supertiendas" in l_lower: store_name = "Supertiendas"
+                if "exito.com" in llink: store_name = "Éxito"
+                elif "jumbocolombia.com" in llink or "jumbo.co" in llink: store_name = "Jumbo"
+                elif "olimpica.com" in llink: store_name = "Olímpica"
+                elif "rappi.com.co" in llink: store_name = "Rappi"
+                elif "mercadolibre.com.co" in llink: store_name = "MercadoLibre CO"
+                elif "carulla.com" in llink: store_name = "Carulla"
+                elif "alkosto.com" in llink: store_name = "Alkosto"
+                elif "surtifamiliar.com" in llink: store_name = "Surtifamiliar"
+                elif "megatiendas.co" in llink: store_name = "Megatiendas"
+                elif "eurosupermercados.com.co" in llink: store_name = "Eurosupermercados"
+                elif "alpina.com" in llink: store_name = "Alpina"
                 results.append({"store": store_name, "price": float(price_val), "currency": "COP", "url": link, "title": title, "snippet": snippet})
     except Exception as e:
         print("Serper API error:", e)
