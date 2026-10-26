@@ -3,8 +3,8 @@ services:
   backend:
     ports:
       - "8080:8000"
+    environment:
+      - SERPER_API_KEY=7d8658b12699a8ce5b91d43be5d51a1f1ed54333
   frontend:
     ports:
       - "3001:5173"
-    environment:
-      - SERPER_API_KEY=YOUR_API_KEY_HERE
