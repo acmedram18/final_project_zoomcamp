@@ -23,10 +23,7 @@ def search_prices(q: str = "", db: Session = Depends(get_db)):
     api_key = os.getenv("SERPER_API_KEY", "").strip()
     results = []
     
-    if not api_key:
-        return {"query": q, "trace_id": trace_id, "results": [], "message": "No encuentro nada"}
-    
-    if not q or not q.strip():
+    if not api_key or not q or not q.strip():
         return {"query": q, "trace_id": trace_id, "results": [], "message": "No encuentro nada"}
     
     try:
@@ -34,7 +31,7 @@ def search_prices(q: str = "", db: Session = Depends(get_db)):
             "https://google.serper.dev/search",
             headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
             json={
-                "q": f"{q.strip()} precio",
+                "q": f"{q.strip()} precio colombia",
                 "gl": "co",
                 "hl": "es",
                 "num": 20
@@ -50,44 +47,42 @@ def search_prices(q: str = "", db: Session = Depends(get_db)):
                 link = item.get("link", "")
                 if not link:
                     continue
-                bad = ["pdf", "wikipedia", "arxiv", "edu", "gov", "jstor", "scielo", "mercadolibre.com.co/ofertas", "/search?", "/buscar?"]
-                if any(b in link.lower() for b in bad):
+                llink = link.lower()
+                if any(bad in llink for bad in ["mercadolibre.com.co/listado", "/listado/", "mercadolibre.com.co/jm/", "google.com", "/search?", "/buscar?"]):
+                    continue
+                if "mercadolibre" in llink and "/p/" not in llink and "/articulo/" not in llink:
                     continue
                 price_val = None
                 m = re.search(r'\$\s*([0-9]{1,3}(?:[.,][0-9]{3})+(?:[.,][0-9]{2})?)', title + " " + snippet)
                 if not m:
-                    m = re.search(r'([0-9]{1,3}(?:[.,][0-9]{3})+(?:[.,][0-9]{2})?)\s*COP', title + " " + snippet)
-                if not m:
                     m = re.search(r'\$\s*([0-9]{4,7})\b', title + " " + snippet)
+                if not m:
+                    m = re.search(r'([0-9]{1,3}(?:[.,][0-9]{3})+(?:[.,][0-9]{2})?)\s*COP', title + " " + snippet)
                 if m:
                     raw = m.group(1).replace('.', '').replace(',', '')
                     try:
                         v = float(raw)
-                        if v >= 1000:
+                        if v >= 500:
                             price_val = v
                     except:
                         pass
                 if price_val is None:
                     continue
-                l = link.lower()
-                store_name = "Tienda"
-                if "exito.com" in l: store_name = "Éxito"
-                elif "jumbo.co" in l: store_name = "Jumbo"
-                elif "olimpica.com" in l: store_name = "Olímpica"
-                elif "carulla.com" in l: store_name = "Carulla"
-                elif "rappi.com.co" in l: store_name = "Rappi"
-                elif "mercadolibre.com.co" in l and "/p/" in l: store_name = "MercadoLibre CO"
-                elif "alkosto.com" in l: store_name = "Alkosto"
-                else:
-                    continue
-                if not (link.startswith("http://") or link.startswith("https://")):
+                store_name = None
+                if "exito.com" in llink: store_name = "Éxito"
+                elif "jumbo.co" in llink or "jumbocolombia.com" in llink: store_name = "Jumbo"
+                elif "olimpica.com" in llink: store_name = "Olímpica"
+                elif "carulla.com" in llink: store_name = "Carulla"
+                elif "rappi.com.co" in llink: store_name = "Rappi"
+                elif "alkosto.com" in llink: store_name = "Alkosto"
+                elif "mercadolibre.com.co" in llink: store_name = "MercadoLibre CO"
+                if not store_name:
                     continue
                 results.append({"store": store_name, "price": price_val, "currency": "COP", "url": link, "title": title, "snippet": snippet})
     except Exception as e:
         print("ERR", e)
         return {"query": q, "trace_id": trace_id, "results": [], "message": "No encuentro nada"}
     
-    # deduplicate by store keeping lowest price
     best = {}
     for r in results:
         s = r["store"]
