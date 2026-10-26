@@ -44,7 +44,16 @@ graph TD
 
 ---
 
-## 🚀 Local Development (Fresh Clone Guide)
+## 🚀 Live Demo & Local Development
+
+### Live Demo (Public)
+**You can access the app from anywhere, no local setup required:**
+
+[**https://fiambreapp-frontend.onrender.com**](https://fiambreapp-frontend.onrender.com)
+
+The frontend is deployed on Render and accessible publicly from any device/browser. 
+
+### Local Development (Fresh Clone Guide)
 
 **Prerequisites**: Docker Desktop.
 
@@ -60,7 +69,7 @@ graph TD
    ```
    This command starts PostgreSQL, Backend, and Frontend containers simultaneously.
 
-3. **Access URLs**
+3. **Access URLs (Local)**
    - **Frontend (FiambreApp)**: `http://localhost:3001`
    - **API Documentation (Swagger UI)**: `http://localhost:8080/docs`
    - **Health Check**: `http://localhost:8080/health`
