@@ -119,6 +119,6 @@ def buy_better(q: str = "", items: str = "", db: Session = Depends(get_db)):
                 {"store": "Éxito", "total": 16200.0},
             ]
         best = min(results, key=lambda x: x["total"])
-        return {"suggestion": f"Buy better at {best['store']} (total ${best['total']:,.2f} COP)", "results": results, "best": best}
+        return {"suggestion": f"Comprar mejor en {best['store']} (total ${best['total']:,.2f} COP)", "results": results, "best": best}
     except Exception:
-        return {"suggestion": "Buy better at Jumbo (total $15,600.00 COP)", "results": [{"store": "Jumbo", "total": 15600.0}], "best": {"store": "Jumbo", "total": 15600.0}}
+        return {"suggestion": "Comprar mejor en Jumbo (total $15,600.00 COP)", "results": [{"store": "Jumbo", "total": 15600.0}], "best": {"store": "Jumbo", "total": 15600.0}}
