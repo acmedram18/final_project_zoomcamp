@@ -29,7 +29,7 @@ def search_prices(q: str, db: Session = Depends(get_db)):
             "https://google.serper.dev/search",
             headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
             json={
-                "q": f"precio {q} site:exito.com OR site:jumbo.co OR site:olimpica.com OR site:mercadolibre.com.co OR site:rappi.com.co OR site:carulla.com",
+                "q": f"precio {q}",
                 "gl": "co",
                 "hl": "es",
                 "num": 20
@@ -39,24 +39,13 @@ def search_prices(q: str, db: Session = Depends(get_db)):
         if response.status_code == 200:
             data = response.json()
             organic = data.get("organic", [])
-            if not organic:
-                response2 = httpx.post(
-                    "https://google.serper.dev/search",
-                    headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
-                    json={"q": f"precio {q} supermercado colombia", "gl": "co", "hl": "es", "num": 20},
-                    timeout=15.0
-                )
-                try:
-                    organic = response2.json().get("organic", [])
-                except:
-                    organic = []
             for item in organic:
                 title = item.get("title", "")
                 snippet = item.get("snippet", "")
                 link = item.get("link", "")
                 if not link:
                     continue
-                if any(bad in link.lower() for bad in ["pdf", "wikipedia", "arxiv", "edu", "gov", "jstor", "scielo"]):
+                if any(bad in link.lower() for bad in ["pdf", "wikipedia", "arxiv", "edu", "gov", "jstor", "scielo", "facebook.com", "youtube.com"]):
                     continue
                 text = title + " " + snippet
                 prices_found = []
@@ -64,19 +53,21 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                     try:
                         raw_p = m.group(1).replace('.', '').replace(',', '')
                         val = float(raw_p)
-                        if val > 100 and val < 500000:
+                        if val > 1000 and val < 500000:
                             prices_found.append(val)
                     except:
                         pass
-                for m in re.finditer(r'\$\s*([0-9]{3,6})\b', text):
+                for m in re.finditer(r'\$\s*([0-9]{4,6})\b', text):
                     try:
                         raw_p = m.group(1)
                         val = float(raw_p)
-                        if val > 100 and val < 500000 and ',' not in m.group(0) and '.' not in m.group(0):
+                        if val > 1000 and val < 500000:
                             prices_found.append(val)
                     except:
                         pass
-                price_val = min(prices_found) if prices_found else 5500.0
+                if not prices_found:
+                    continue
+                price_val = min(prices_found)
                 store_name = "Supermercado Colombia"
                 l_lower = link.lower()
                 if "exito" in l_lower: store_name = "Éxito"
@@ -86,6 +77,7 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                 elif "mercadolibre" in l_lower: store_name = "MercadoLibre CO"
                 elif "carulla" in l_lower: store_name = "Carulla"
                 elif "alkosto" in l_lower: store_name = "Alkosto"
+                elif "supertiendas" in l_lower: store_name = "Supertiendas"
                 results.append({"store": store_name, "price": float(price_val), "currency": "COP", "url": link, "title": title, "snippet": snippet})
     except Exception as e:
         print("Serper API error:", e)
