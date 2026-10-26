@@ -29,10 +29,10 @@ def search_prices(q: str, db: Session = Depends(get_db)):
             "https://google.serper.dev/search",
             headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
             json={
-                "q": f"{q} precio",
+                "q": f"{q} precio colombia",
                 "gl": "co",
                 "hl": "es",
-                "num": 30
+                "num": 40
             },
             timeout=15.0
         )
@@ -46,9 +46,7 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                 if not link or not link.startswith("http"):
                     continue
                 llink = link.lower()
-                if any(bad in llink for bad in ["facebook.com", "youtube.com", "google.com", "wikipedia.org", "mercadolibre.com.co/listado"]):
-                    continue
-                if "alpina.com" in llink:
+                if any(bad in llink for bad in ["facebook.com", "youtube.com", "google.com", "wikipedia.org", "mercadolibre.com.co/listado", "alpina.com/leches"]):
                     continue
                 text = title + " " + snippet
                 candidates = []
@@ -56,7 +54,7 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                     try:
                         raw_p = m.group(1).replace('.', '').replace(',', '')
                         val = float(raw_p)
-                        if 1000 <= val < 150000:
+                        if 500 <= val < 200000:
                             candidates.append(val)
                     except:
                         pass
@@ -80,6 +78,7 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                 elif "oxxo" in llink: store_name = "OXXO"
                 elif "mercacentro.com" in llink: store_name = "Mercacentro"
                 elif "farmatodo.com.co" in llink: store_name = "Farmatodo"
+                elif "cencosud.com" in llink or "metro.co" in llink: store_name = "Metro"
                 results.append({"store": store_name, "price": float(price_val), "currency": "COP", "url": link, "title": title, "snippet": snippet})
     except Exception as e:
         print("Serper API error:", e)
@@ -91,7 +90,7 @@ def search_prices(q: str, db: Session = Depends(get_db)):
             best_by_store[key] = r
     results = list(best_by_store.values())
     results = sorted(results, key=lambda x: x["price"])
-    results = results[:6]
+    results = results[:10]
     
     try:
         for r in results:
