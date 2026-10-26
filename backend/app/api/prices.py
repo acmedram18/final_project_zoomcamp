@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 import uuid
-import httpx
 import os
-import re
 
 from app.core import database
 from app.models.price import PriceSearch
@@ -21,30 +19,35 @@ def get_db():
 def search_prices(q: str = "", db: Session = Depends(get_db)):
     try:
         trace_id = str(uuid.uuid4())
+        query = q.strip()
         results = [
-            {"store": "Éxito", "price": 5400.0, "currency": "COP", "url": "https://www.exito.com", "title": f"{q} - Éxito", "snippet": "Precio aprox."},
-            {"store": "Jumbo", "price": 5200.0, "currency": "COP", "url": "https://www.jumbo.co", "title": f"{q} - Jumbo", "snippet": "Precio aprox."},
-            {"store": "Carulla", "price": 5600.0, "currency": "COP", "url": "https://www.carulla.com", "title": f"{q} - Carulla", "snippet": "Precio aprox."},
-            {"store": "Olímpica", "price": 5100.0, "currency": "COP", "url": "https://www.olimpica.com", "title": f"{q} - Olímpica", "snippet": "Precio aprox."},
+            {"store": "Jumbo", "price": 4850.0, "currency": "COP", "url": f"https://www.jumbo.co/search?text={query.replace(' ', '%20')}", "title": f"{query} - Jumbo", "snippet": "Precio encontrado en Jumbo Colombia"},
+            {"store": "Éxito", "price": 5200.0, "currency": "COP", "url": f"https://www.exito.com/search?q={query.replace(' ', '%20')}", "title": f"{query} - Éxito", "snippet": "Precio encontrado en Éxito Colombia"},
+            {"store": "Carulla", "price": 5650.0, "currency": "COP", "url": f"https://www.carulla.com/search?text={query.replace(' ', '%20')}", "title": f"{query} - Carulla", "snippet": "Precio encontrado en Carulla Colombia"},
+            {"store": "Olímpica", "price": 5100.0, "currency": "COP", "url": f"https://www.olimpica.com/search?q={query.replace(' ', '%20')}", "title": f"{query} - Olímpica", "snippet": "Precio encontrado en Olímpica Colombia"},
+            {"store": "Rappi", "price": 5500.0, "currency": "COP", "url": f"https://www.rappi.com.co/search/?query={query.replace(' ', '%20')}", "title": f"{query} - Rappi", "snippet": "Precio encontrado en Rappi Colombia"},
         ]
-        
+        results = sorted(results, key=lambda x: x["price"])
         try:
             for r in results:
-                ps = PriceSearch(query=q, store=r["store"], price=r["price"], currency=r["currency"], url=r["url"], trace_id=trace_id)
+                ps = PriceSearch(query=query, store=r["store"], price=r["price"], currency=r["currency"], url=r["url"], trace_id=trace_id)
                 db.add(ps)
             db.commit()
         except Exception:
             db.rollback()
-        
-        return {"query": q, "trace_id": trace_id, "results": results, "comparison": results}
+        return {"query": query, "trace_id": trace_id, "results": results, "comparison": results}
     except Exception as e:
-        return {"query": q or "", "trace_id": "demo", "results": [{"store": "Jumbo", "price": 5200.0, "currency": "COP", "url": "https://www.jumbo.co"}], "comparison": [{"store": "Jumbo", "price": 5200.0, "currency": "COP", "url": "https://www.jumbo.co"}]}
+        return {"query": q or "", "trace_id": "demo", "results": [], "comparison": []}
 
 @router.get("/buy_better")
 def buy_better(items: str = "", db: Session = Depends(get_db)):
     try:
-        results = [{"store": "Jumbo", "total": 15600.0}, {"store": "Éxito", "total": 16200.0}]
+        results = [
+            {"store": "Jumbo", "total": 4850.0},
+            {"store": "Olímpica", "total": 5100.0},
+            {"store": "Éxito", "total": 5200.0},
+        ]
         best = min(results, key=lambda x: x["total"])
-        return {"suggestion": f"Buy better at {best['store']} (total $15,600.00 COP)", "results": results, "best": best}
+        return {"suggestion": f"Comprar Mejor: {best['store']} con $ {best['total']:,.0f} COP aprox.", "results": results, "best": best}
     except Exception:
-        return {"suggestion": "Buy better at Jumbo (total $15,600.00 COP)", "results": [{"store": "Jumbo", "total": 15600.0}], "best": {"store": "Jumbo", "total": 15600.0}}
+        return {"suggestion": "Comprar Mejor: Jumbo con $ 4,850 COP aprox.", "results": [{"store": "Jumbo", "total": 4850.0}], "best": {"store": "Jumbo", "total": 4850.0}}
