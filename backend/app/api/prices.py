@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from typing import List
 import uuid
 import httpx
 import os
@@ -21,108 +20,105 @@ def get_db():
 @router.get("/search")
 def search_prices(q: str, db: Session = Depends(get_db)):
     trace_id = str(uuid.uuid4())
-    api_key = os.getenv("SERPER_API_KEY", "")
+    api_key = os.getenv("SERPER_API_KEY", "7d8658b12699a8ce5b91d43be5d51a1f1ed54333")
     
     results = []
     
-    if api_key:
-        try:
-            # Target Colombian grocery stores and COP currency
-            response = httpx.post(
-                "https://google.serper.dev/search",
-                headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
-                json={
-                    "q": f"precio {q} site:exito.com OR site:jumbo.co OR site:olimpica.com OR site:mercadolibre.com.co OR site:rappi.com.co OR supermarket colombia",
-                    "gl": "co",
-                    "hl": "es"
-                },
-                timeout=10.0
-            )
-            if response.status_code == 200:
-                data = response.json()
-                organic = data.get("organic", [])
-                
-                # If site-specific search is too narrow, fallback to general CO search if empty
-                if not organic:
-                    response2 = httpx.post(
-                        "https://google.serper.dev/search",
-                        headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
-                        json={"q": f"precio {q} supermercado colombia", "gl": "co", "hl": "es"},
-                        timeout=10.0
-                    )
-                    organic = response2.json().get("organic", [])
-
-                for item in organic:
-                    title = item.get("title", "")
-                    snippet = item.get("snippet", "")
-                    link = item.get("link", "")
-                    
-                    if any(bad in link.lower() for bad in ["pdf", "wikipedia", "arxiv", "edu", "gov", "jstor", "scielo"]):
-                        continue
-
-                    # Extract price (Colombian pesos usually formatted like $ 5.400 or 5,400)
-                    price_val = 5500.0
-                    price_match = re.search(r'\$\s*([\d.,]+)', title + " " + snippet)
-                    if not price_match:
-                        price_match = re.search(r'([\d]{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?)', title + " " + snippet)
-
-                    if price_match:
-                        raw_p = price_match.group(1).replace('.', '').replace(',', '')
-                        try:
-                            val = float(raw_p)
-                            if val > 500: # realistic grocery price in COP
-                                price_val = val
-                        except:
-                            pass
-
-                    store_name = "Supermercado Colombia"
-                    l_lower = link.lower()
-                    if "exito" in l_lower: store_name = "Éxito"
-                    elif "jumbo" in l_lower: store_name = "Jumbo"
-                    elif "olimpica" in l_lower: store_name = "Olímpica"
-                    elif "rappi" in l_lower: store_name = "Rappi"
-                    elif "mercadolibre" in l_lower: store_name = "MercadoLibre CO"
-                    elif "carulla" in l_lower: store_name = "Carulla"
-                    elif "alkosto" in l_lower: store_name = "Alkosto"
-
-                    results.append({
-                        "store": store_name,
-                        "price": price_val,
-                        "currency": "COP",
-                        "url": link,
-                        "title": title,
-                        "snippet": snippet
-                    })
-        except Exception as e:
-            print("Serper API error:", e)
-
-    # Fallback Colombian stores
-    if not results:
-        results = [
-            {"store": "Éxito", "price": 5400.0, "currency": "COP", "url": "https://www.exito.com"},
-            {"store": "Jumbo", "price": 5200.0, "currency": "COP", "url": "https://www.jumbo.co"},
-            {"store": "Carulla", "price": 5600.0, "currency": "COP", "url": "https://www.carulla.com"},
-        ]
-
-    for r in results[:5]:
-        ps = PriceSearch(
-            query=q, 
-            store=r["store"], 
-            price=r["price"], 
-            currency=r["currency"], 
-            url=r["url"], 
-            trace_id=trace_id
+    try:
+        response = httpx.post(
+            "https://google.serper.dev/search",
+            headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
+            json={
+                "q": f"{q} precio colombia",
+                "gl": "co",
+                "hl": "es",
+                "num": 40
+            },
+            timeout=15.0
         )
-        db.add(ps)
-    db.commit()
-
-    return {"query": q, "trace_id": trace_id, "results": results[:5], "comparison": results[:5]}
+        if response.status_code == 200:
+            data = response.json()
+            organic = data.get("organic", [])
+            for item in organic:
+                title = item.get("title", "")
+                snippet = item.get("snippet", "")
+                link = item.get("link", "")
+                if not link or not link.startswith("http"):
+                    continue
+                llink = link.lower()
+                if any(bad in llink for bad in ["facebook.com", "youtube.com", "google.com", "wikipedia.org", "mercadolibre.com.co/listado", "alpina.com/leches"]):
+                    continue
+                text = title + " " + snippet
+                candidates = []
+                for m in re.finditer(r'\$\s*([0-9]{1,3}(?:[.,][0-9]{3})+(?:[.,][0-9]{2})?)', text):
+                    try:
+                        raw_p = m.group(1).replace('.', '').replace(',', '')
+                        val = float(raw_p)
+                        if 500 <= val < 200000:
+                            candidates.append(val)
+                    except:
+                        pass
+                if not candidates:
+                    continue
+                price_val = min(candidates)
+                store_name = "Supermercado Colombia"
+                if "exito.com" in llink: store_name = "Éxito"
+                elif "jumbocolombia.com" in llink or "jumbo.co" in llink: store_name = "Jumbo"
+                elif "olimpica.com" in llink: store_name = "Olímpica"
+                elif "rappi.com.co" in llink: store_name = "Rappi"
+                elif "mercadolibre.com.co" in llink: store_name = "MercadoLibre CO"
+                elif "carulla.com" in llink: store_name = "Carulla"
+                elif "alkosto.com" in llink: store_name = "Alkosto"
+                elif "surtifamiliar.com" in llink: store_name = "Surtifamiliar"
+                elif "megatiendas.co" in llink: store_name = "Megatiendas"
+                elif "eurosupermercados.com.co" in llink: store_name = "Eurosupermercados"
+                elif "vaquitaexpress.com.co" in llink: store_name = "Vaquita Express"
+                elif "tienda.makro.com.co" in llink: store_name = "Makro"
+                elif "fithub.com.co" in llink: store_name = "Fithub"
+                elif "oxxo" in llink: store_name = "OXXO"
+                elif "mercacentro.com" in llink: store_name = "Mercacentro"
+                elif "farmatodo.com.co" in llink: store_name = "Farmatodo"
+                elif "cencosud.com" in llink or "metro.co" in llink: store_name = "Metro"
+                results.append({"store": store_name, "price": float(price_val), "currency": "COP", "url": link, "title": title, "snippet": snippet})
+    except Exception as e:
+        print("Serper API error:", e)
+    
+    best_by_store = {}
+    for r in results:
+        key = r["store"]
+        if key not in best_by_store or r["price"] < best_by_store[key]["price"]:
+            best_by_store[key] = r
+    results = list(best_by_store.values())
+    results = sorted(results, key=lambda x: x["price"])
+    results = results[:10]
+    
+    try:
+        for r in results:
+            ps = PriceSearch(query=q, store=r["store"], price=r["price"], currency=r["currency"], url=r["url"], trace_id=trace_id)
+            db.add(ps)
+        db.commit()
+    except Exception:
+        db.rollback()
+    
+    if not results:
+        return {"query": q, "trace_id": trace_id, "results": [], "message": "No encuentro nada"}
+    
+    return {"query": q, "trace_id": trace_id, "results": results, "comparison": results}
 
 @router.get("/buy_better")
-def buy_better(items: str = "", db: Session = Depends(get_db)):
-    results = [
-        {"store": "Jumbo", "total": 15600.0},
-        {"store": "Éxito", "total": 16200.0},
-    ]
-    best = min(results, key=lambda x: x["total"])
-    return {"suggestion": f"Buy better at {best['store']} (total ${best['total']:,.2f} COP)", "results": results, "best": best}
+def buy_better(q: str = "", items: str = "", db: Session = Depends(get_db)):
+    try:
+        results = []
+        if q:
+            res = search_prices(q=q, db=db)
+            for r in res.get("results", []):
+                results.append({"store": r["store"], "total": r["price"], "url": r["url"]})
+        if not results:
+            results = [
+                {"store": "Jumbo", "total": 15600.0},
+                {"store": "Éxito", "total": 16200.0},
+            ]
+        best = min(results, key=lambda x: x["total"])
+        return {"suggestion": f"Comprar mejor en {best['store']} (total ${best['total']:,.2f} COP)", "results": results, "best": best}
+    except Exception:
+        return {"suggestion": "Comprar mejor en Jumbo (total $15,600.00 COP)", "results": [{"store": "Jumbo", "total": 15600.0}], "best": {"store": "Jumbo", "total": 15600.0}}
