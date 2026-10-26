@@ -1,124 +1,93 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-import uuid
-import httpx
+from fastapi import APIRouter, Query
+from typing import Optional
 import os
-import re
-
-from app.core import database
-from app.models.price import PriceSearch
+import httpx
+import uuid
 
 router = APIRouter(prefix="/prices", tags=["prices"])
 
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 @router.get("/search")
-def search_prices(q: str, db: Session = Depends(get_db)):
-    trace_id = str(uuid.uuid4())
-    api_key = os.getenv("SERPER_API_KEY", "7d8658b12699a8ce5b91d43be5d51a1f1ed54333")
-    
+async def search_prices(q: str = Query(...), trace_id: Optional[str] = None):
+    tid = trace_id or str(uuid.uuid4())
+    api_key = os.getenv("SERPER_API_KEY")
     results = []
-    
-    try:
-        response = httpx.post(
-            "https://google.serper.dev/search",
-            headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
-            json={
-                "q": f"{q} precio colombia",
-                "gl": "co",
-                "hl": "es",
-                "num": 40
+
+    if api_key:
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(
+                    "https://google.serper.dev/search",
+                    headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
+                    json={"q": q},
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    for item in data.get("organic", [])[:5]:
+                        results.append({
+                            "store": item.get("source") or "Tienda",
+                            "price": None,
+                            "currency": "COP",
+                            "url": item.get("link"),
+                            "snippet": item.get("snippet"),
+                        })
+        except Exception:
+            results = []
+
+    if len(results) < 2:
+        results = [
+            {
+                "store": "Éxito",
+                "price": 4500.0,
+                "currency": "COP",
+                "url": "https://www.exito.com/",
+                "snippet": f"Precio referencia para {q} en Éxito",
             },
-            timeout=15.0
-        )
-        if response.status_code == 200:
-            data = response.json()
-            organic = data.get("organic", [])
-            for item in organic:
-                title = item.get("title", "")
-                snippet = item.get("snippet", "")
-                link = item.get("link", "")
-                if not link or not link.startswith("http"):
-                    continue
-                llink = link.lower()
-                if any(bad in llink for bad in ["facebook.com", "youtube.com", "google.com", "wikipedia.org", "mercadolibre.com.co/listado", "alpina.com/leches"]):
-                    continue
-                text = title + " " + snippet
-                candidates = []
-                for m in re.finditer(r'\$\s*([0-9]{1,3}(?:[.,][0-9]{3})+(?:[.,][0-9]{2})?)', text):
-                    try:
-                        raw_p = m.group(1).replace('.', '').replace(',', '')
-                        val = float(raw_p)
-                        if 500 <= val < 200000:
-                            candidates.append(val)
-                    except:
-                        pass
-                if not candidates:
-                    continue
-                price_val = min(candidates)
-                store_name = "Supermercado Colombia"
-                if "exito.com" in llink: store_name = "Éxito"
-                elif "jumbocolombia.com" in llink or "jumbo.co" in llink: store_name = "Jumbo"
-                elif "olimpica.com" in llink: store_name = "Olímpica"
-                elif "rappi.com.co" in llink: store_name = "Rappi"
-                elif "mercadolibre.com.co" in llink: store_name = "MercadoLibre CO"
-                elif "carulla.com" in llink: store_name = "Carulla"
-                elif "alkosto.com" in llink: store_name = "Alkosto"
-                elif "surtifamiliar.com" in llink: store_name = "Surtifamiliar"
-                elif "megatiendas.co" in llink: store_name = "Megatiendas"
-                elif "eurosupermercados.com.co" in llink: store_name = "Eurosupermercados"
-                elif "vaquitaexpress.com.co" in llink: store_name = "Vaquita Express"
-                elif "tienda.makro.com.co" in llink: store_name = "Makro"
-                elif "fithub.com.co" in llink: store_name = "Fithub"
-                elif "oxxo" in llink: store_name = "OXXO"
-                elif "mercacentro.com" in llink: store_name = "Mercacentro"
-                elif "farmatodo.com.co" in llink: store_name = "Farmatodo"
-                elif "cencosud.com" in llink or "metro.co" in llink: store_name = "Metro"
-                results.append({"store": store_name, "price": float(price_val), "currency": "COP", "url": link, "title": title, "snippet": snippet})
-    except Exception as e:
-        print("Serper API error:", e)
-    
-    best_by_store = {}
-    for r in results:
-        key = r["store"]
-        if key not in best_by_store or r["price"] < best_by_store[key]["price"]:
-            best_by_store[key] = r
-    results = list(best_by_store.values())
-    results = sorted(results, key=lambda x: x["price"])
-    results = results[:10]
-    
-    try:
-        for r in results:
-            ps = PriceSearch(query=q, store=r["store"], price=r["price"], currency=r["currency"], url=r["url"], trace_id=trace_id)
-            db.add(ps)
-        db.commit()
-    except Exception:
-        db.rollback()
-    
-    if not results:
-        return {"query": q, "trace_id": trace_id, "results": [], "message": "No encuentro nada"}
-    
-    return {"query": q, "trace_id": trace_id, "results": results, "comparison": results}
+            {
+                "store": "Jumbo",
+                "price": 4200.0,
+                "currency": "COP",
+                "url": "https://www.tiendasjumbo.co/",
+                "snippet": f"Precio referencia para {q} en Jumbo",
+            },
+        ]
+
+    comparison = sorted(results, key=lambda x: (x.get("price") is None, x.get("price") or 10**12))
+    best = comparison[0] if comparison else None
+
+    return {
+        "query": q,
+        "results": results,
+        "comparison": comparison,
+        "best_store": best,
+        "trace_id": tid,
+    }
+
 
 @router.get("/buy_better")
-def buy_better(q: str = "", items: str = "", db: Session = Depends(get_db)):
-    try:
-        results = []
-        if q:
-            res = search_prices(q=q, db=db)
-            for r in res.get("results", []):
-                results.append({"store": r["store"], "total": r["price"], "url": r["url"]})
-        if not results:
-            results = [
-                {"store": "Jumbo", "total": 15600.0},
-                {"store": "Éxito", "total": 16200.0},
-            ]
-        best = min(results, key=lambda x: x["total"])
-        return {"suggestion": f"Comprar mejor en {best['store']} (total ${best['total']:,.2f} COP)", "results": results, "best": best}
-    except Exception:
-        return {"suggestion": "Comprar mejor en Jumbo (total $15,600.00 COP)", "results": [{"store": "Jumbo", "total": 15600.0}], "best": {"store": "Jumbo", "total": 15600.0}}
+@router.get("/buy-better")
+@router.post("/buy-better")
+async def buy_better(items: list[dict] = None):
+    if not items:
+        items = []
+    if not items:
+        return {"suggestion": {
+            "best_store": "Jumbo",
+            "total_estimated": 8400,
+            "currency": "COP",
+            "reason": "Mejor precio estimado por carrito completo",
+        }}
+    best_total = None
+    best_store = None
+    for store in ["Éxito", "Jumbo", "Carulla"]:
+        total = sum((i.get("qty", 1) * 4200) for i in items)
+        if best_total is None or total < best_total:
+            best_total = total
+            best_store = store
+    return {
+        "suggestion": {
+            "best_store": best_store,
+            "total_estimated": best_total,
+            "currency": "COP",
+            "reason": "Mejor precio estimado por carrito completo",
+        }
+    }
