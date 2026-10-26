@@ -11,6 +11,7 @@ function App() {
   const [buyBetter, setBuyBetter] = useState(null)
   const [expiryAlert, setExpiryAlert] = useState(null)
 
+  // Form states
   const [name, setName] = useState('')
   const [category, setCategory] = useState('')
   const [quantity, setQuantity] = useState(1)
@@ -153,6 +154,7 @@ function App() {
   return (
     <div style={{ padding: '40px 20px', maxWidth: '1000px', margin: '0 auto' }}>
       
+      {/* Neobrutalist Header */}
       <header style={{ marginBottom: '36px', textAlign: 'center' }}>
         <div style={{ display: 'inline-block', padding: '6px 16px', background: '#facc15', color: '#0f172a', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px', border: '3px solid #0f172a', boxShadow: '3px 3px 0px #0f172a' }}>
           🇨🇴 Edición Colombia
@@ -165,6 +167,7 @@ function App() {
         </p>
       </header>
 
+      {/* Expiry Alert Banner */}
       {expiryAlert && expiryAlert.alert && (
         <div style={{ background: '#fef08a', border: '3px solid #0f172a', color: '#0f172a', padding: '16px 24px', borderRadius: '16px', marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '5px 5px 0px #0f172a' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -175,19 +178,22 @@ function App() {
             </div>
           </div>
           <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: '#fff', border: '2px solid #0f172a', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>
-            ID: {expiryAlert.trace_id ? expiryAlert.trace_id.slice(0, 8) : 'demo'}
+            ID: {expiryAlert.trace_id.slice(0, 8)}
           </span>
         </div>
       )}
 
+      {/* Navigation Tabs */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
         <button onClick={() => setTab('inventory')} style={{ ...brutalButton(tab === 'inventory', '#facc15'), flex: 1 }}>📦 Inventario</button>
         <button onClick={() => setTab('shopping')} style={{ ...brutalButton(tab === 'shopping', '#4ade80'), flex: 1 }}>🛒 Lista de Compras</button>
         <button onClick={() => setTab('prices')} style={{ ...brutalButton(tab === 'prices', '#60a5fa'), flex: 1 }}>🏷️ Comparador</button>
       </div>
 
+      {/* MAIN CONTAINER */}
       <div style={brutalBox}>
         
+        {/* TAB 1: INVENTORY */}
         {tab === 'inventory' && (
           <div>
             <h2 style={{ margin: '0 0 20px 0', fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>Inventario de Despensa</h2>
@@ -222,7 +228,7 @@ function App() {
               </div>
               <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', marginTop: '6px' }}>
                 <button type="submit" style={brutalButton(true, editingId ? '#facc15' : '#4ade80')}>
-                  {editingId ? 'Actualizar Producto' : 'Agregar Producto'}
+                  {editingId ? 'Actualizar Producto' : 'Guardar Producto'}
                 </button>
                 {editingId && (
                   <button type="button" onClick={() => { setEditingId(null); setName(''); setCategory(''); setQuantity(1); setUnit(''); setExpirationDate(''); setMinStock(1); }} style={brutalButton(false)}>Cancelar</button>
@@ -275,11 +281,12 @@ function App() {
           </div>
         )}
 
+        {/* TAB 2: SHOPPING LIST */}
         {tab === 'shopping' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>Lista de Compras</h2>
-              <button onClick={generateShopping} style={brutalButton(true, '#4ade80')}>⚡ Auto-Generar</button>
+              <button onClick={generateShopping} style={brutalButton(true, '#4ade80')}>⚡ Auto-Generar por Stock</button>
             </div>
 
             <form onSubmit={(e) => {
@@ -335,6 +342,7 @@ function App() {
           </div>
         )}
 
+        {/* TAB 3: PRICE COMPARATOR */}
         {tab === 'prices' && (
           <div>
             <h2 style={{ margin: '0 0 20px 0', fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>Comparador de Precios (Colombia)</h2>
@@ -348,7 +356,7 @@ function App() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#334155', fontWeight: 700 }}>Resultados para "{priceResults.query}"</h3>
-                  <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: '#f1f5f9', border: '2px solid #0f172a', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>Trace ID: {priceResults.trace_id ? priceResults.trace_id.slice(0, 8) : 'demo'}</span>
+                  <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: '#f1f5f9', border: '2px solid #0f172a', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>Trace ID: {priceResults.trace_id.slice(0, 8)}</span>
                 </div>
 
                 {buyBetter && (
