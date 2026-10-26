@@ -11,7 +11,6 @@ function App() {
   const [buyBetter, setBuyBetter] = useState(null)
   const [expiryAlert, setExpiryAlert] = useState(null)
 
-  // Form states
   const [name, setName] = useState('')
   const [category, setCategory] = useState('')
   const [quantity, setQuantity] = useState(1)
@@ -106,11 +105,12 @@ function App() {
 
   const searchPrices = (e) => {
     e.preventDefault()
+    if (!priceQuery) return
     fetch(`${API_BASE}/prices/search?q=${encodeURIComponent(priceQuery)}`)
       .then(r => r.json())
       .then(setPriceResults)
 
-    fetch(`${API_BASE}/prices/buy_better`)
+    fetch(`${API_BASE}/prices/buy_better?q=${encodeURIComponent(priceQuery)}`)
       .then(r => r.json())
       .then(setBuyBetter)
       .catch(() => setBuyBetter(null))
@@ -153,8 +153,6 @@ function App() {
 
   return (
     <div style={{ padding: '40px 20px', maxWidth: '1000px', margin: '0 auto' }}>
-      
-      {/* Neobrutalist Header */}
       <header style={{ marginBottom: '36px', textAlign: 'center' }}>
         <div style={{ display: 'inline-block', padding: '6px 16px', background: '#facc15', color: '#0f172a', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px', border: '3px solid #0f172a', boxShadow: '3px 3px 0px #0f172a' }}>
           🇨🇴 Edición Colombia
@@ -167,7 +165,6 @@ function App() {
         </p>
       </header>
 
-      {/* Expiry Alert Banner */}
       {expiryAlert && expiryAlert.alert && (
         <div style={{ background: '#fef08a', border: '3px solid #0f172a', color: '#0f172a', padding: '16px 24px', borderRadius: '16px', marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '5px 5px 0px #0f172a' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -178,26 +175,21 @@ function App() {
             </div>
           </div>
           <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: '#fff', border: '2px solid #0f172a', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>
-            ID: {expiryAlert.trace_id.slice(0, 8)}
+            ID: {expiryAlert.trace_id ? expiryAlert.trace_id.slice(0, 8) : 'demo'}
           </span>
         </div>
       )}
 
-      {/* Navigation Tabs */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
         <button onClick={() => setTab('inventory')} style={{ ...brutalButton(tab === 'inventory', '#facc15'), flex: 1 }}>📦 Inventario</button>
         <button onClick={() => setTab('shopping')} style={{ ...brutalButton(tab === 'shopping', '#4ade80'), flex: 1 }}>🛒 Lista de Compras</button>
         <button onClick={() => setTab('prices')} style={{ ...brutalButton(tab === 'prices', '#60a5fa'), flex: 1 }}>🏷️ Comparador</button>
       </div>
 
-      {/* MAIN CONTAINER */}
       <div style={brutalBox}>
-        
-        {/* TAB 1: INVENTORY */}
         {tab === 'inventory' && (
           <div>
             <h2 style={{ margin: '0 0 20px 0', fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>Inventario de Despensa</h2>
-            
             <form onSubmit={saveProduct} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', marginBottom: '32px', border: '3px solid #0f172a', boxShadow: '4px 4px 0px #0f172a', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a', fontWeight: 800 }}>{editingId ? '✏️ Editar Producto' : '➕ Agregar Producto'}</h3>
@@ -228,21 +220,19 @@ function App() {
               </div>
               <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', marginTop: '6px' }}>
                 <button type="submit" style={brutalButton(true, editingId ? '#facc15' : '#4ade80')}>
-                  {editingId ? 'Actualizar Producto' : 'Guardar Producto'}
+                  {editingId ? 'Actualizar Producto' : 'Agregar Producto'}
                 </button>
                 {editingId && (
                   <button type="button" onClick={() => { setEditingId(null); setName(''); setCategory(''); setQuantity(1); setUnit(''); setExpirationDate(''); setMinStock(1); }} style={brutalButton(false)}>Cancelar</button>
                 )}
               </div>
             </form>
-
             <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: 800 }}>FILTRAR:</span>
               <button onClick={() => setFilter('all')} style={brutalButton(filter === 'all', '#facc15')}>Todos</button>
               <button onClick={() => setFilter('expiring')} style={brutalButton(filter === 'expiring', '#facc15')}>Por Caducar</button>
               <button onClick={() => setFilter('low_stock')} style={brutalButton(filter === 'low_stock', '#facc15')}>Stock Bajo</button>
             </div>
-
             {products.length === 0 ? <p style={{ color: '#64748b', textAlign: 'center', padding: '40px 0', fontWeight: 600 }}>No hay productos en tu alacena.</p> : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', border: '3px solid #0f172a', boxShadow: '4px 4px 0px #0f172a' }}>
@@ -281,14 +271,12 @@ function App() {
           </div>
         )}
 
-        {/* TAB 2: SHOPPING LIST */}
         {tab === 'shopping' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
               <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>Lista de Compras</h2>
-              <button onClick={generateShopping} style={brutalButton(true, '#4ade80')}>⚡ Auto-Generar por Stock</button>
+              <button onClick={generateShopping} style={brutalButton(true, '#4ade80')}>⚡ Auto-Generar</button>
             </div>
-
             <form onSubmit={(e) => {
               e.preventDefault()
               const name = e.target.sname.value
@@ -303,7 +291,6 @@ function App() {
               <input name="sqty" type="number" step="0.1" defaultValue="1" style={{ ...brutalInput, width: '100px' }} />
               <button type="submit" style={brutalButton(true, '#60a5fa')}>Agregar</button>
             </form>
-
             {shoppingList.length === 0 ? <p style={{ color: '#64748b', textAlign: 'center', padding: '40px 0', fontWeight: 600 }}>Tu lista de compras está limpia.</p> : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', border: '3px solid #0f172a', boxShadow: '4px 4px 0px #0f172a' }}>
@@ -342,11 +329,9 @@ function App() {
           </div>
         )}
 
-        {/* TAB 3: PRICE COMPARATOR */}
         {tab === 'prices' && (
           <div>
             <h2 style={{ margin: '0 0 20px 0', fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>Comparador de Precios (Colombia)</h2>
-            
             <form onSubmit={searchPrices} style={{ marginBottom: '28px', display: 'flex', gap: '12px' }}>
               <input placeholder="¿Qué producto buscas? (ej. café juan valdez, leche alpina)" value={priceQuery} onChange={e => setPriceQuery(e.target.value)} required style={brutalInput} />
               <button type="submit" style={brutalButton(true, '#60a5fa')}>Buscar</button>
@@ -356,7 +341,7 @@ function App() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#334155', fontWeight: 700 }}>Resultados para "{priceResults.query}"</h3>
-                  <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: '#f1f5f9', border: '2px solid #0f172a', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>Trace ID: {priceResults.trace_id.slice(0, 8)}</span>
+                  <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: '#f1f5f9', border: '2px solid #0f172a', padding: '4px 8px', borderRadius: '6px', fontWeight: 700 }}>Trace ID: {priceResults.trace_id ? priceResults.trace_id.slice(0, 8) : 'demo'}</span>
                 </div>
 
                 {buyBetter && (
@@ -391,7 +376,6 @@ function App() {
             )}
           </div>
         )}
-
       </div>
     </div>
   )
