@@ -19,7 +19,7 @@ def get_db():
         db.close()
 
 @router.get("/search")
-def search_prices(q: str = "", db: Session = Depends(get_db)):
+def search_prices(q: str, db: Session = Depends(get_db)):
     trace_id = str(uuid.uuid4())
     api_key = os.getenv("SERPER_API_KEY", "")
     
@@ -27,11 +27,12 @@ def search_prices(q: str = "", db: Session = Depends(get_db)):
     
     if api_key:
         try:
+            # Target Colombian grocery stores and COP currency
             response = httpx.post(
                 "https://google.serper.dev/search",
                 headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
                 json={
-                    "q": f"precio {q} site:exito.com OR site:jumbo.co OR site:olimpica.com OR site:mercadolibre.com.co OR site:rappi.com.co OR site:carulla.com OR supermarket colombia",
+                    "q": f"precio {q} site:exito.com OR site:jumbo.co OR site:olimpica.com OR site:mercadolibre.com.co OR site:rappi.com.co OR supermarket colombia",
                     "gl": "co",
                     "hl": "es"
                 },
@@ -41,6 +42,7 @@ def search_prices(q: str = "", db: Session = Depends(get_db)):
                 data = response.json()
                 organic = data.get("organic", [])
                 
+                # If site-specific search is too narrow, fallback to general CO search if empty
                 if not organic:
                     response2 = httpx.post(
                         "https://google.serper.dev/search",
@@ -48,10 +50,7 @@ def search_prices(q: str = "", db: Session = Depends(get_db)):
                         json={"q": f"precio {q} supermercado colombia", "gl": "co", "hl": "es"},
                         timeout=10.0
                     )
-                    try:
-                        organic = response2.json().get("organic", [])
-                    except Exception:
-                        organic = []
+                    organic = response2.json().get("organic", [])
 
                 for item in organic:
                     title = item.get("title", "")
@@ -61,6 +60,7 @@ def search_prices(q: str = "", db: Session = Depends(get_db)):
                     if any(bad in link.lower() for bad in ["pdf", "wikipedia", "arxiv", "edu", "gov", "jstor", "scielo"]):
                         continue
 
+                    # Extract price (Colombian pesos usually formatted like $ 5.400 or 5,400)
                     price_val = 5500.0
                     price_match = re.search(r'\$\s*([\d.,]+)', title + " " + snippet)
                     if not price_match:
@@ -70,9 +70,9 @@ def search_prices(q: str = "", db: Session = Depends(get_db)):
                         raw_p = price_match.group(1).replace('.', '').replace(',', '')
                         try:
                             val = float(raw_p)
-                            if val > 500:
+                            if val > 500: # realistic grocery price in COP
                                 price_val = val
-                        except Exception:
+                        except:
                             pass
 
                     store_name = "Supermercado Colombia"
@@ -96,41 +96,33 @@ def search_prices(q: str = "", db: Session = Depends(get_db)):
         except Exception as e:
             print("Serper API error:", e)
 
+    # Fallback Colombian stores
     if not results:
-        query_enc = q.replace(' ', '%20')
         results = [
-            {"store": "Éxito", "price": 5400.0, "currency": "COP", "url": f"https://www.exito.com/search?q={query_enc}", "title": f"{q} - Éxito", "snippet": "Ver en Éxito"},
-            {"store": "Jumbo", "price": 5200.0, "currency": "COP", "url": f"https://www.jumbo.co/search?text={query_enc}", "title": f"{q} - Jumbo", "snippet": "Ver en Jumbo"},
-            {"store": "Carulla", "price": 5600.0, "currency": "COP", "url": f"https://www.carulla.com/search?text={query_enc}", "title": f"{q} - Carulla", "snippet": "Ver en Carulla"},
-            {"store": "Olímpica", "price": 5100.0, "currency": "COP", "url": f"https://www.olimpica.com/search?q={query_enc}", "title": f"{q} - Olímpica", "snippet": "Ver en Olímpica"},
-            {"store": "Rappi", "price": 5500.0, "currency": "COP", "url": f"https://www.rappi.com.co/search/?query={query_enc}", "title": f"{q} - Rappi", "snippet": "Ver en Rappi"},
+            {"store": "Éxito", "price": 5400.0, "currency": "COP", "url": "https://www.exito.com"},
+            {"store": "Jumbo", "price": 5200.0, "currency": "COP", "url": "https://www.jumbo.co"},
+            {"store": "Carulla", "price": 5600.0, "currency": "COP", "url": "https://www.carulla.com"},
         ]
-        results = sorted(results, key=lambda x: x["price"])
 
-    try:
-        for r in results[:5]:
-            ps = PriceSearch(
-                query=q, 
-                store=r["store"], 
-                price=r["price"], 
-                currency=r.get("currency", "COP"), 
-                url=r["url"], 
-                trace_id=trace_id
-            )
-            db.add(ps)
-        db.commit()
-    except Exception as e:
-        print("DB error saving price search:", e)
-        db.rollback()
+    for r in results[:5]:
+        ps = PriceSearch(
+            query=q, 
+            store=r["store"], 
+            price=r["price"], 
+            currency=r["currency"], 
+            url=r["url"], 
+            trace_id=trace_id
+        )
+        db.add(ps)
+    db.commit()
 
     return {"query": q, "trace_id": trace_id, "results": results[:5], "comparison": results[:5]}
 
 @router.get("/buy_better")
-def buy_better(items: str = "", q: str = "", db: Session = Depends(get_db)):
+def buy_better(items: str = "", db: Session = Depends(get_db)):
     results = [
-        {"store": "Jumbo", "total": 5200.0},
-        {"store": "Olímpica", "total": 5100.0},
-        {"store": "Éxito", "total": 5400.0},
+        {"store": "Jumbo", "total": 15600.0},
+        {"store": "Éxito", "total": 16200.0},
     ]
     best = min(results, key=lambda x: x["total"])
     return {"suggestion": f"Buy better at {best['store']} (total ${best['total']:,.2f} COP)", "results": results, "best": best}
