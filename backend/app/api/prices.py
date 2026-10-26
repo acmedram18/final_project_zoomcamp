@@ -29,10 +29,10 @@ def search_prices(q: str, db: Session = Depends(get_db)):
             "https://google.serper.dev/search",
             headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
             json={
-                "q": f"{q}",
+                "q": f"{q} colombia precio",
                 "gl": "co",
                 "hl": "es",
-                "num": 30
+                "num": 40
             },
             timeout=15.0
         )
@@ -46,29 +46,20 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                 if not link or not link.startswith("http"):
                     continue
                 llink = link.lower()
-                if any(bad in llink for bad in ["facebook.com", "youtube.com", "google.com", "wikipedia.org"]):
+                if any(bad in llink for bad in ["facebook.com", "youtube.com", "google.com", "wikipedia.org", "mercadolibre.com.co/listado"]):
                     continue
                 text = title + " " + snippet
-                # Find all prices and take the one that looks most like unit price
                 candidates = []
                 for m in re.finditer(r'\$\s*([0-9]{1,3}(?:[.,][0-9]{3})+(?:[.,][0-9]{2})?)', text):
                     try:
                         raw_p = m.group(1).replace('.', '').replace(',', '')
                         val = float(raw_p)
-                        if 1000 <= val < 100000:
-                            candidates.append(val)
-                    except:
-                        pass
-                for m in re.finditer(r'\$\s*([0-9]{4,6})\b', text):
-                    try:
-                        val = float(m.group(1))
-                        if 1000 <= val < 100000:
+                        if 500 <= val < 200000:
                             candidates.append(val)
                     except:
                         pass
                 if not candidates:
                     continue
-                # Prefer price around typical 1L (~7000-9000)
                 price_val = min(candidates)
                 store_name = "Supermercado Colombia"
                 if "exito.com" in llink: store_name = "Éxito"
@@ -84,21 +75,21 @@ def search_prices(q: str, db: Session = Depends(get_db)):
                 elif "vaquitaexpress.com.co" in llink: store_name = "Vaquita Express"
                 elif "tienda.makro.com.co" in llink: store_name = "Makro"
                 elif "fithub.com.co" in llink: store_name = "Fithub"
-                elif "cencosud" in llink or "metro.co" in llink: store_name = "Metro/Cencosud"
+                elif "oxxo" in llink: store_name = "OXXO"
+                elif "mercacentro.com" in llink: store_name = "Mercacentro"
                 results.append({"store": store_name, "price": float(price_val), "currency": "COP", "url": link, "title": title, "snippet": snippet})
     except Exception as e:
         print("Serper API error:", e)
     
-    # Remove duplicates by URL
-    seen = set()
-    unique = []
+    # deduplicate by store keeping lowest price
+    best_by_store = {}
     for r in results:
-        if r["url"] in seen:
-            continue
-        seen.add(r["url"])
-        unique.append(r)
-    results = sorted(unique, key=lambda x: x["price"])
-    results = results[:5]
+        key = r["store"]
+        if key not in best_by_store or r["price"] < best_by_store[key]["price"]:
+            best_by_store[key] = r
+    results = list(best_by_store.values())
+    results = sorted(results, key=lambda x: x["price"])
+    results = results[:8]
     
     try:
         for r in results:
